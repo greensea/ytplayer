@@ -2,9 +2,9 @@
 var FLY_SPEED_FAST:Number = 1;		//快字幕速度：秒
 var FLY_SPEED_NORMAL:Number = 3;	//中等速度字幕：秒
 var FLY_SPEED_SLOW:Number = 5;		//慢字幕速度：秒
-var FLY_FONTSIZE_BIG:Number = 28;		//字体大小，大：像素
-var FLY_FONTSIZE_NORMAL:Number = 24;	//字体大小，中：像素
-var FLY_FONTSIZE_SMALL:Number = 16;		//字体大小，小：像素
+var FLY_FONTSIZE_BIG:Number = 26;		//字体大小，大：像素
+var FLY_FONTSIZE_NORMAL:Number = 22;	//字体大小，中：像素
+var FLY_FONTSIZE_SMALL:Number = 14;		//字体大小，小：像素
 var FLY_TYPE_TOP:Number = 0x2;
 var FLY_TYPE_BOTTOM:Number = 0x0;
 var FLY_TYPE_FLY:Number = 0x3;
@@ -44,9 +44,12 @@ function fly_get_xml(url){
 	fly_var_queue.push({cmtID:8, cmtText:"億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万", sTime:2.9, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
 	fly_var_queue.push({cmtID:9, cmtText:"*", sTime:2.7, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
 	fly_var_queue.push({cmtID:10, cmtText:"这个条款旨在成为制造商和客户之间的纽带,其中制造商作为受益人.在美国造船工业中这个条款通常是全险条款,(制造商风险保险)其中作为例外的是战争,地震,斗争或没有在此列出的或通常认可的(例外风险).这个条款通常由以下几部分总和而成:不少于当客户向制造商当时根据游艇价格协议所应支付的数目加上客户向制造商提供的和游艇有关的项目所付出的款项,或者是加上客户向制造商支付的由制造商代销的项目的款项. ", sTime:2.8, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queueLength = 10;
+	fly_var_queue.push({cmtID:11, cmtText:"初音miku - 私の時間. ", sTime:2.8, flyType:FLY_TYPE_BOTTOM, flySpeed:3, fontColor:0x00ff00, fontSize:FLY_FONTSIZE_SMALL});
+	fly_var_queue.push({cmtID:12, cmtText:"这是一曲非常经典的歌，慢慢欣赏吧. ", sTime:2.8, flyType:FLY_TYPE_TOP, flySpeed:3, fontColor:0x00ffff, fontSize:FLY_FONTSIZE_SMALL});
+	
+	fly_var_queueLength = 12;
 	fly_comment_new();
-	trace("fly_get_xml" + getTimer());
+	//trace("fly_get_xml" + getTimer());
 }
 
 
@@ -58,29 +61,29 @@ function fly_comment_new(){
 	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, channelY, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
-	txt.antiAliasType = "ADVANCED";
-	txt.sharpness = 400;			
-	txt.antiAliasType = "ADVANCED";
+	//txt.antiAliasType = "ADVANCED";
+	//txt.sharpness = 400;			
 	txt.autoSize = true;
 	//设置样式
 	txt.setTextFormat(_fly_comment_get_style(comment.fontColor, comment.fontSize));
 	//设置非飘移字体的位置
 	if(comment.flyType != FLY_TYPE_FLY){
-		txt.x = (ytVideo._width - txt.textWidth) / 2;
+		txt._visible = false;
+		txt._x = (ytVideo._width - txt.textWidth) / 2;
 	}
 		
 	//显示
-	trace("show " + getTimer());
+	//trace("show " + getTimer());
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType);
 	
 	//设置下一次显示字体的事件
 	fly_var_indexNext++;
-	trace("fly_comment_new " + fly_var_indexNext + "~~" + fly_var_queueLength);
+	//trace("fly_comment_new " + fly_var_indexNext + "~~" + fly_var_queueLength);
 	if(fly_var_indexNext < fly_var_queueLength){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
-		trace("fly_comment_new-->nextTime=" + nextTime);
+		//trace("fly_comment_new-->nextTime=" + nextTime);
 	}
 }
 	
@@ -96,13 +99,15 @@ function _fly_comment_get_style(fColor, fSize){
 
 //评论显示开始
 function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number){
-	trace("fly_show flyTYpe=" + flyType + " " + getTimer());
+	//trace("fly_show flyTYpe=" + flyType + " " + getTimer());
 	if(flyType == FLY_TYPE_FLY){		//飘移的字幕
-		trace("fly_show=" + speed + "=" + startTime + " = " + getTimer());
+		//trace("fly_show=" + speed + "=" + startTime + " = " + getTimer());
 		setTimeout(_fly_move, (startTime - ns.time) * 1000, txt, speed, startTime);
 	}
 	else{		//定点显示的字幕
-		setTimeout(fly_delete, speed * 1000, txt);
+		txt._visible = true;
+		trace(speed);
+		setTimeout(_fly_delete, speed * 1000, txt);
 	}
 }
 
@@ -138,5 +143,13 @@ function _fly_delete(txt:TextField){
 
 //内部 核心 通道请求
 function _fly_channel_request(cmt){
-	return (cmt.cmtID - 1) * cmt.fontSize;
+	switch(cmt.flyType){
+		case FLY_TYPE_FLY:
+			return (cmt.cmtID - 1) * cmt.fontSize;
+			break;
+		case FLY_TYPE_BOTTOM:
+			return (ytVideo._height - cmt.fontSize - 2);
+			break;
+	}
+		
 }
