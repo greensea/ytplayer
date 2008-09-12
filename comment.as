@@ -30,10 +30,13 @@ fly_get_xml();
 
 //获取字幕源XML
 function fly_get_xml(url){
-	var nsCmt:XML = new XML;
+	var nsCmt = new XML();
 	tip_add("读取评论…");
-	//nsCmt.load("http://bbs.bbxy.net/sitemap_baidu.xml");
-	//trace(nsCmt);
+	nsCmt.onLoad = function(){
+		trace("length = " + this.childNodes.toString());
+	}
+	nsCmt.load("http://bbs.bbxy.net/plus_bzps_config.xml");
+	trace("nsCmt=" + nsCmt.toString());
 	fly_var_queue.push({cmtID:1, cmtText:"这条是测试的评论", sTime:5, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
 	fly_var_queue.push({cmtID:2, cmtText:"这条是测试的评论——很长很长的哦~", sTime:2.1, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
 	fly_var_queue.push({cmtID:3, cmtText:"这条是测试的评论~", sTime:2.5, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});

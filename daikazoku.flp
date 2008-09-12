@@ -1,4 +1,6 @@
 ﻿<flash_project name="daikazoku" vc_site="daikazoku" version="1">
     <project_file path="./comment.as" filetype="as" />
     <project_file path="./ytplayer.fla" filetype="fla" profile="" />
+    <project_file path="./header.as" filetype="as" />
+    <project_file path="./init.as" filetype="as" />
 </flash_project>
