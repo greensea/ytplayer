@@ -111,6 +111,7 @@ function fly_comment_new(){
 	//创建文本实例
 	//trace(channel[1] + ", " + channel[0] + ", " + comment.cmtText);
 	var txt:TextField = _level0.createTextField(null, channel[1], FLY_STARTING_X, channel[0], 1, 1);
+	//trace("createlevel=" + channel[1] + "	" + channel[0] + "	" + txt.text);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	//txt.antiAliasType = "ADVANCED";
@@ -234,14 +235,15 @@ function _fly_channel_request(cmt){
 	
 	//分配通道
 	switch(cmt.flyType){
-		case FLY_TYPE_BOTTOM:			
+		case FLY_TYPE_BOTTOM:
 			//设置查找初始位置
 			if(chl[1].isSubtitle){
 				chl[0] = ytVideo._height - chl[1].channelBreadth;
 			}
 			else{
-				chl[0] = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
+				chl[0] = fly_subtitle_redline - chl[1].channelBreadth;
 			}
+
 			
 			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
 			var fFlag = false;
@@ -294,8 +296,9 @@ function _fly_channel_request(cmt){
 				}
 				chl[0] = chl[0] % modNum + modNum;
 			}
-
+			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
 			cl[1] = FLY_LEVEL_BOTTOM + lvl;
+			
 			break;
 			
 		
@@ -370,6 +373,12 @@ function _fly_channel_request(cmt){
 			cl[0] = chl[0];
 			
 			cl[1] = cmt.flyType + lvl;
+			if(cmt.flyType == FLY_TYPE_FLY){
+				cl[1] += FLY_LEVEL_FLY;
+			}
+			else{
+				cl[1] += FLY_LEVEL_TOP;
+			}
 			break;
 			
 /*		case FLY_TYPE_TOP:
