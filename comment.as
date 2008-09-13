@@ -6,6 +6,7 @@ var FLY_SPEED_SLOW:Number = 5.5;		//慢字幕速度：秒
 var FLY_FONTSIZE_BIG:Number = 26;		//字体大小，大：像素
 var FLY_FONTSIZE_NORMAL:Number = 22;	//字体大小，中：像素
 var FLY_FONTSIZE_SMALL:Number = 14;		//字体大小，小：像素
+var FLY_FONTSIZE_SUBTITLE:Number = FLY_FONTSIZE_SMALL;	//字体大小，字幕：像素
 
 var FLY_FONTCOLOR_DEFAULT:Number = 0xffffff;		//默认字体颜色：白
 
@@ -17,6 +18,9 @@ var FLY_LEVEL_RANGE:Number = 1000;
 var FLY_LEVEL_FLY:Number = FLY_LEVEL_RANGE;
 var FLY_LEVEL_TOP:Number =FLY_LEVEL_FLY + FLY_LEVEL_RANGE;
 var FLY_LEVEL_BOTTOM:Number = FLY_LEVEL_TOP + FLY_LEVEL_RANGE;
+
+var FLY_SUBTITLE_LINES:Number = 2;		//字幕占据的最大行数
+var FLY_SUBTITLE_RANGE:Number = FLY_FONTSIZE_SUBTITLE * FLY_SUBTITLE_LINES;		//字幕占据的高度数素
 
 var FLY_STARTING_X:Number = ytVideo._width;		//字幕初始位置：相对与影片
 var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
@@ -33,6 +37,8 @@ var fly_var_queue:Object = {
 var fly_var_indexNext = 0;
 var fly_var_queueLength = 0;
 var fly_var_queue:Array = new Array();
+var _fly_var_channels:Array = new Array();		//Array(channelID, {cmtID:Number, channelBreadth:Number, deathTime:playTime-Seconds})
+var fly_subtitle_redline = 0;			//当前字幕所占据的高度
 var _fly_var_level_accumulator = 0;
 
 fly_get_xml();
@@ -61,7 +67,7 @@ function fly_get_xml(url){
 					fontColor:cmts[i].attributes["fontColor"],
 					fontSize:cmts[i].attributes["fontSize"],
 					flyType:cmts[i].attributes["flyType"],
-					flySpeed:FLY_SPEED_NORAML //单位：s
+					flySpeed:FLY_SPEED_NORMAL //单位：s
 				}
 				//一系列的判断
 				if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
@@ -181,31 +187,194 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number){
 //内部 删除评论
 var debug:String;
 function _fly_delete(txt:TextField){
+	//释放通道
+	_fly_channel_release(txt.cmtID);
+	//删除文本实例
 	txt.removeTextField();
 	//trace(debug);
 }
 
+//内部 通道占用
+function _fly_channel_occupy(chl){
+	//如果数组空则直接push进去
+	if(_fly_var_channels.length == 0){
+		_fly_var_channels.push(chl);
+		return false;
+	}
+	//数组不空才需要查找
+	for(var i = 0; i < _fly_var_channels.length; i++){
+		if(_fly_var_channels[i][0] >= chl[0]){
+			_fly_var_channels.splice(i, 0, chl);
+			i = _fly_ar_channels.length;
+		}
+	}
+}
+	
+
+//内部 通道释放
+function _fly_channel_release(txtID){
+	for(var i = 0; i < _fly_var_channels.length; i++){
+		if(_fly_var_channels[i][1].cmtID == txtID){
+			_fly_var_channels.splice(i, 1);
+			i = _fly_var_channels.length;
+		}
+	}
+}		
+
 //内部 核心 通道请求
 function _fly_channel_request(cmt){
-	var d = Array(1, 1);	//(通道，层)
+	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
+	var chl = new Array(0, {cmtID:0, channelBreadth:cmt.fontSize + 2, deathTime:(cmt.sTime + cmt.flySpeed)})
+	
+	//分配层
 	_fly_var_level_accumulator++;
 	var lvl = _fly_var_level_accumulator % FLY_LEVEL_RANGE;
-	//trace(lvl);
+	
+	//分配通道
 	switch(cmt.flyType){
-		case FLY_TYPE_FLY:
-			d[0] = lvl * cmt.fontSize;
-			d[1] = FLY_LEVEL_FLY + lvl;
+		case FLY_TYPE_BOTTOM:			
+			//设置查找初始位置
+			if(chl[1].isSubtitle){
+				chl[0] = ytVideo._height - chl[1].channelBreadth;
+			}
+			else{
+				chl[0] = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
+			}
+			
+			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
+			var fFlag = false;
+			var stIndex = _fly_var_channels.length - 1;
+			
+			//查找到已有的通道头小于我们的初始通道尾的通道
+			while(stIndex > 0 && !fFlag){
+				if(_fly_var_channels[stIndex][0] <= chl[0] + chl[1].channelBreadth){
+					fFlag = true;
+				}
+				else{
+					fFlag--;
+				}
+			}
+			//如果找不到通道尾小于我们初始通道的通道的话，则可以直接使用现在的通道
+			if(stIndex == 0){
+				fFlag = true;
+			}
+			
+			//如果还没有能分配通道，则进行查找分配
+			if(!fFlag){
+				while(!fFlag && stIndex >= 0){
+					//把我们的分配到他头上去
+					chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
+					//如果我们的头通道小于等于他的尾通道，则会发生冲突
+					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
+					if(chl[0] <= itTail){
+						stIndex--;
+					}
+					else{
+						fFlag = true;
+					}
+				}
+				//如果已经找到通道头还没有找到可用通道，则直接分配到上一个通道的头通道去
+				if(stIndex < 0){
+					chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
+					fFlag = true;
+				}
+			}
+
+			//对负数的通道取模
+			
+			if(chl[0] <= 0){
+				var modNum = 0;
+				if(chl[1].isSubtitle){
+					modNum = (ytVideo._height - chl[1].channelBreadth);
+				}
+				else{
+					modNum = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
+				}
+				chl[0] = chl[0] % modNum + modNum;
+			}
+
+			cl[1] = FLY_LEVEL_BOTTOM + lvl;
 			break;
-		case FLY_TYPE_BOTTOM:
-			d[0] = (ytVideo._height - cmt.fontSize - 2);
-			d[1] = FLY_LEVEL_BOTTOM + lvl;
+			
+		
+		//默认的飘移字幕和顶部字幕的通道分配
+		default:
+
+			//从头开始查找可用的通道，直到字幕红线为止
+			var fFlag = false;
+			//先设置查找初始数组索引，从通道ID为0处开始查找
+			var stIndex = 0;
+			if(_fly_var_channels.length != 0){
+				while(!fFlag && stIndex <= _fly_var_channels.length){
+					if(_fly_var_channels[stIndex] >= 0){
+						fFlag = true;
+					}
+					else{
+						stIndex++;
+					}
+				}
+				//如果到了数组末尾还找不到大于0的通道就可以从分配通道1
+				if(stIndex == _fly_var_channels.length){
+					fFlag = true;
+					chl[0] = 1;
+				}
+				else{
+					fFlag = false;
+				}
+			}
+		
+			//循环查找可用的通道
+			while(!fFlag){
+				chl[0]++;
+				if(_fly_var_channels.length == 0){	//如果已经分配的通道数为0则可以直接分配1号通道
+					fFlag = true;
+				}
+				else{			//否则就要查找可用的通道
+					if(_fly_var_channels[stIndxe][0] > chl[0] + chl[1].channelBreadth){		//如果该通道头大于本通道尾，继续判断
+						//还要判断我们的通道尾有没有超过下一个通道的头
+						if(stIndex + 1 == _fly_var_channels.length){	//后面已经没有通道了，可以分配
+							fFlag = true;
+						}
+						else if(_fly_var_channels[stIndex + 1][0] > chl[0] + chl[1].channelBreadth){	//否则还要判断一下
+							fFlag = true;
+						}
+					}
+					if(!fFlag){	//否则，计算是否能在该通道占用者消失前使用该通道
+						
+						//……额……这里实现起来比较复杂，先留着……
+						
+						//如果还是不行的话就只能死翘翘了，继续查找吧
+						if(!fFlag){
+							chl[0] = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth + 1;
+							stIndex++;
+							if(stIndex >= _fly_var_channels[stIndex].length){
+								fFlag = true;
+							}
+						}
+					}
+				}
+			}
+			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
+			if(chl[0] + chl[1].channelBreadth >= FLY_SUBTITLE_RANGE){
+				chl[0] = chl[0] % FLY_SUBTITLE_RANGE + Math.round(chl[0] % FLY_SUBTITLE_RANGE);
+			}
+			
+			//查找终于完毕了
+			cl[0] = chl[0];
+			cl[1] = cmt.flyType + lvl;
 			break;
-		case FLY_TYPE_TOP:
-			d[0] = (ytVideo._y + cmt.fontSize + 1);
-			d[1] = FLY_LEVEL_TOP + lvl;
+			
+/*		case FLY_TYPE_TOP:
+			cl[0] = (ytVideo._y + chl[1].channelBreadth);
+			cl[1] = FLY_LEVEL_TOP + lvl;
 			break;
+*/
+
 	}
-	return d;
+	
+	_fly_channel_occupy(chl);
+	
+	return cl;
 }
 
 
