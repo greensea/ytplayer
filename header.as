@@ -13,5 +13,6 @@ var ns:NetStream;
 
 
 //包含文件
-#include "comment.as"
 #include "init.as"
+#include "_functions.as"
+#include "comment.as"

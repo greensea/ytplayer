@@ -1,13 +1,22 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
-var FLY_SPEED_FAST:Number = 1;		//快字幕速度：秒
-var FLY_SPEED_NORMAL:Number = 3;	//中等速度字幕：秒
-var FLY_SPEED_SLOW:Number = 5;		//慢字幕速度：秒
+var FLY_SPEED_FAST:Number = 2.5;		//快字幕速度：秒
+var FLY_SPEED_NORMAL:Number = 4;	//中等速度字幕：秒
+var FLY_SPEED_SLOW:Number = 5.5;		//慢字幕速度：秒
+
 var FLY_FONTSIZE_BIG:Number = 26;		//字体大小，大：像素
 var FLY_FONTSIZE_NORMAL:Number = 22;	//字体大小，中：像素
 var FLY_FONTSIZE_SMALL:Number = 14;		//字体大小，小：像素
+
+var FLY_FONTCOLOR_DEFAULT:Number = 0xffffff;		//默认字体颜色：白
+
 var FLY_TYPE_TOP:Number = 0x2;
 var FLY_TYPE_BOTTOM:Number = 0x0;
 var FLY_TYPE_FLY:Number = 0x3;
+
+var FLY_LEVEL_RANGE:Number = 1000;
+var FLY_LEVEL_FLY:Number = FLY_LEVEL_RANGE;
+var FLY_LEVEL_TOP:Number =FLY_LEVEL_FLY + FLY_LEVEL_RANGE;
+var FLY_LEVEL_BOTTOM:Number = FLY_LEVEL_TOP + FLY_LEVEL_RANGE;
 
 var FLY_STARTING_X:Number = ytVideo._width;		//字幕初始位置：相对与影片
 var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
@@ -24,44 +33,77 @@ var fly_var_queue:Object = {
 var fly_var_indexNext = 0;
 var fly_var_queueLength = 0;
 var fly_var_queue:Array = new Array();
-
+var _fly_var_level_accumulator = 0;
 
 fly_get_xml();
+
+
 
 //获取字幕源XML
 function fly_get_xml(url){
 	var nsCmt = new XML();
 	tip_add("读取评论…");
-	nsCmt.onLoad = function(){
-		trace("length = " + this.childNodes.toString());
-	}
-	nsCmt.load("http://bbs.bbxy.net/plus_bzps_config.xml");
-	trace("nsCmt=" + nsCmt.toString());
-	fly_var_queue.push({cmtID:1, cmtText:"这条是测试的评论", sTime:5, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:2, cmtText:"这条是测试的评论——很长很长的哦~", sTime:2.1, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:3, cmtText:"这条是测试的评论~", sTime:2.5, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:4, cmtText:"fly_comment_new-->nextTime=99.9999999999996~", sTime:2.2, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:5, cmtText:"合唱_ニコニコ動画流星群+ version 1.3", sTime:2.4, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:6, cmtText:"囧", sTime:2.55, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:7, cmtText:"这是由 FinePlus 自动发送的用于探测您的IP的1*1像素的透明GIF图片", sTime:2.22, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:8, cmtText:"億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万億千万", sTime:2.9, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:9, cmtText:"*", sTime:2.7, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:10, cmtText:"这个条款旨在成为制造商和客户之间的纽带,其中制造商作为受益人.在美国造船工业中这个条款通常是全险条款,(制造商风险保险)其中作为例外的是战争,地震,斗争或没有在此列出的或通常认可的(例外风险).这个条款通常由以下几部分总和而成:不少于当客户向制造商当时根据游艇价格协议所应支付的数目加上客户向制造商提供的和游艇有关的项目所付出的款项,或者是加上客户向制造商支付的由制造商代销的项目的款项. ", sTime:2.8, flyType:0x3, flySpeed:3, fontColor:0xff0000, fontSize:24});
-	fly_var_queue.push({cmtID:11, cmtText:"初音miku - 私の時間. ", sTime:2.8, flyType:FLY_TYPE_BOTTOM, flySpeed:3, fontColor:0x00ff00, fontSize:FLY_FONTSIZE_SMALL});
-	fly_var_queue.push({cmtID:12, cmtText:"这是一曲非常经典的歌，慢慢欣赏吧. ", sTime:2.8, flyType:FLY_TYPE_TOP, flySpeed:3, fontColor:0x00ffff, fontSize:FLY_FONTSIZE_SMALL});
+	nsCmt.load("data.xml");
 	
-	fly_var_queueLength = 12;
-	fly_comment_new();
-	//trace("fly_get_xml" + getTimer());
+	nsCmt.onLoad = function(){
+		//trace("length = " + this);
+		var cmts = xml_getElementByTagName(this, "comments").childNodes;
+		//trace(cmts[1].attributes["playTime"]);
+		fly_var_queueLength = 0;
+		fly_var_queue = new Array(cmts.length);
+		for(var i = 0; i < cmts.length; i++){
+			if(cmts[i].nodeName){
+				dgrComments.addItem({片时:_sec2disTime(cmts[i].attributes["playTime"]), 内容:cmts[i].lastChild, 评论时间:_timestamp2date(cmts[i].attributes["commentTime"])});
+				//压入弹幕数据库
+				var newCmt:Object = {
+					cmtText:cmts[i].lastChild,
+					sTime:cmts[i].attributes["playTime"],	//单位：s，基于影片开始的时间戳
+					fontColor:cmts[i].attributes["fontColor"],
+					fontSize:cmts[i].attributes["fontSize"],
+					flyType:cmts[i].attributes["flyType"],
+					flySpeed:FLY_SPEED_NORAML //单位：s
+				}
+				//一系列的判断
+				if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
+				if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
+				switch(newCmt.fontSize){
+					case "small":
+						newCmt.fontSize = FLY_FONTSIZE_SMALL;
+						break;
+					case "big":
+						newCmt.fontSize = FLY_FONTSIZE_BIG;
+						break;
+					default:
+						newCmt.fontSize = FLY_FONTSIZE_NORMAL;
+						break;
+				}
+				switch(newCmt.flyType){
+					case "bottom":
+						newCmt.flyType = FLY_TYPE_BOTTOM;
+						break;
+					case "top":
+						newCmt.flyType = FLY_TYPE_TOP;
+						break;
+					default:
+						newCmt.flyType = FLY_TYPE_FLY;
+						break;
+				}
+				fly_var_queue[fly_var_queueLength] = newCmt;
+				fly_var_queueLength++;
+			}
+		}		
+		fly_comment_new();
+	}
 }
 
 
 //字幕队列控制，出队列
 function fly_comment_new(){
 	var comment = fly_var_queue[fly_var_indexNext];
-	var channelY = _fly_channel_request(comment);		//请求通道
+	var channel = _fly_channel_request(comment);		//请求通道
 	//创建文本实例
-	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, channelY, 1, 1);
+	//trace(channel[1] + ", " + channel[0] + ", " + comment.cmtText);
+	var txt:TextField = _level0.createTextField(null, channel[1], FLY_STARTING_X, channel[0], 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	//txt.antiAliasType = "ADVANCED";
@@ -76,7 +118,6 @@ function fly_comment_new(){
 	}
 		
 	//显示
-	//trace("show " + getTimer());
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType);
 	
 	//设置下一次显示字体的事件
@@ -86,7 +127,7 @@ function fly_comment_new(){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
-		//trace("fly_comment_new-->nextTime=" + nextTime);
+		//trace("fly_comment_new-->nextTime=" + nextTime + "	" + fly_var_queue[fly_var_indexNext].cmtText);
 	}
 }
 	
@@ -95,7 +136,7 @@ function _fly_comment_get_style(fColor, fSize){
 	var s:TextFormat = new TextFormat;
 	s.bold = true;
 	s.size = fSize;
-	s.color = fColor;
+	s.color = int("0x" + fColor);
 	return s;
 }
 	
@@ -105,11 +146,11 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number)
 	//trace("fly_show flyTYpe=" + flyType + " " + getTimer());
 	if(flyType == FLY_TYPE_FLY){		//飘移的字幕
 		//trace("fly_show=" + speed + "=" + startTime + " = " + getTimer());
-		setTimeout(_fly_move, (startTime - ns.time) * 1000, txt, speed, startTime);
+		setTimeout(_fly_move, (startTime - _video_get_time()) * 1000, txt, speed, startTime);
 	}
 	else{		//定点显示的字幕
 		txt._visible = true;
-		trace(speed);
+		//trace(speed);
 		setTimeout(_fly_delete, speed * 1000, txt);
 	}
 }
@@ -141,18 +182,44 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number){
 var debug:String;
 function _fly_delete(txt:TextField){
 	txt.removeTextField();
-	trace(debug);
+	//trace(debug);
 }
 
 //内部 核心 通道请求
 function _fly_channel_request(cmt){
+	var d = Array(1, 1);	//(通道，层)
+	_fly_var_level_accumulator++;
+	var lvl = _fly_var_level_accumulator % FLY_LEVEL_RANGE;
+	//trace(lvl);
 	switch(cmt.flyType){
 		case FLY_TYPE_FLY:
-			return (cmt.cmtID - 1) * cmt.fontSize;
+			d[0] = lvl * cmt.fontSize;
+			d[1] = FLY_LEVEL_FLY + lvl;
 			break;
 		case FLY_TYPE_BOTTOM:
-			return (ytVideo._height - cmt.fontSize - 2);
+			d[0] = (ytVideo._height - cmt.fontSize - 2);
+			d[1] = FLY_LEVEL_BOTTOM + lvl;
+			break;
+		case FLY_TYPE_TOP:
+			d[0] = (ytVideo._y + cmt.fontSize + 1);
+			d[1] = FLY_LEVEL_TOP + lvl;
 			break;
 	}
-		
+	return d;
+}
+
+
+//囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
+function xml_getElementByTagName(xml, nodeName){
+	for(var i = 0; i < xml.childNodes.length; i++){
+		if(xml.childNodes[i].nodeName == nodeName){
+			return xml.childNodes[i]
+		}
+		else{
+			if(xml.childNodes[i].nodeName){
+				var node = xml_getElementByTagName(xml.childNodes[i], nodeName);
+				if(node.nodeName == nodeName) return node;
+			}
+		}
+	}
 }
