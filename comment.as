@@ -187,6 +187,7 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 var debug:String;
 function _fly_delete(cmtID:Number, txt:TextField){
 	//释放通道
+	trace("delete=" + cmtID + ", " + txt.text);
 	_fly_channel_release(cmtID);
 	//删除文本实例
 	txt.removeTextField();
@@ -218,6 +219,7 @@ function _fly_channel_occupy(chl){
 function _fly_channel_release(cmtID){
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i][1].cmtID == cmtID){
+			//trace("release=" + _fly_var_channels[1]);
 			_fly_var_channels.splice(i, 1);
 			i = _fly_var_channels.length;
 		}
@@ -249,34 +251,46 @@ function _fly_channel_request(cmt){
 			var fFlag = false;
 			var stIndex = _fly_var_channels.length - 1;
 			
+			trace("==============");
+			trace(_fly_var_channels);
+			
 			//查找到已有的通道头小于我们的初始通道尾的通道
 			while(stIndex > 0 && !fFlag){
+				//trace(_fly_var_channels[stIndex][0] + "<=" + chl[0] + chl[1].channelBreadth);
 				if(_fly_var_channels[stIndex][0] <= chl[0] + chl[1].channelBreadth){
 					fFlag = true;
 				}
 				else{
-					fFlag--;
+					stIndex--;
 				}
 			}
 			//如果找不到通道尾小于我们初始通道的通道的话，则可以直接使用现在的通道
 			if(stIndex == 0){
 				fFlag = true;
 			}
-			
+			else{	//否则当然还要继续查找
+				fFlag = false;
+			}
+
+
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
+				trace("--------");
+				trace(chl[0]);
 				while(!fFlag && stIndex >= 0){
-					//把我们的分配到他头上去
-					chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
 					//如果我们的头通道小于等于他的尾通道，则会发生冲突
 					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
+					trace(chl[0] + "<=" + itTail + ", stIndex=" + stIndex);
 					if(chl[0] <= itTail){
+						//不冲突的话就可以把我们的分配到他头上去
+						chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
 						stIndex--;
 					}
 					else{
 						fFlag = true;
 					}
 				}
+				
 				//如果已经找到通道头还没有找到可用通道，则直接分配到上一个通道的头通道去
 				if(stIndex < 0){
 					chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
@@ -298,7 +312,7 @@ function _fly_channel_request(cmt){
 			}
 			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
 			cl[1] = FLY_LEVEL_BOTTOM + lvl;
-			
+			//trace("bottom channel=" + cl[0]);
 			break;
 			
 		

@@ -15,6 +15,7 @@
 		<comment id="9" fontSize="" flySpeed="normal" fontColor="00ff00" flyType="" isSubtitle="0" playTime="8.14" commentTime="1221217600">囧</comment>
 		<comment id="10" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="8.54" commentTime="1221217286">初音miku - 私の時間.</comment>
 		<comment id="11" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="top" isSubtitle="1" playTime="9.54" commentTime="1221217376">这是一曲非常经典的歌，慢慢欣赏吧.</comment>
-		<comment id="10" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="10" commentTime="1221217286">仰望蔚蓝的天空 感受迎面扑来的清风</comment>
+		<comment id="12" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="10" commentTime="1221217286">仰望蔚蓝的天空 感受迎面扑来的清风</comment>
+		<comment id="13" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="13" commentTime="1221217290">纯洁无暇的心灵 始终有一片广阔天地</comment>
 	</comments>
 </ytPlayer>
