@@ -64,7 +64,7 @@ function fly_get_xml(url){
 				var newCmt:Object = {
 					cmtID:cmts[i].attributes["id"],
 					cmtText:cmts[i].lastChild,
-					sTime:cmts[i].attributes["playTime"],	//单位：s，基于影片开始的时间戳
+					sTime:(cmts[i].attributes["playTime"] * 1),	//单位：s，基于影片开始的时间戳
 					fontColor:cmts[i].attributes["fontColor"],
 					fontSize:cmts[i].attributes["fontSize"],
 					flyType:cmts[i].attributes["flyType"],
@@ -107,10 +107,24 @@ function fly_get_xml(url){
 //字幕队列控制，出队列
 function fly_comment_new(){
 	var comment = fly_var_queue[fly_var_indexNext];
-	var channel = _fly_channel_request(comment);		//请求通道
+	
+	//分配层
+	_fly_var_level_accumulator++;
+	var lvl = _fly_var_level_accumulator % FLY_LEVEL_RANGE;
+	switch(comment.flyType){
+		case FLY_TYPE_FLY:
+			lvl += FLY_LEVEL_FLY;
+			break;
+		case FLY_TYPE_TOP:
+			lvl += FLY_LEVEL_TOP;
+			break;
+		case FLY_TYPE_BOTTOM:
+			lvl += FLY_LEVEL_BOTTOM;
+			break;
+	}
+	
 	//创建文本实例
-	//trace(channel[1] + ", " + channel[0] + ", " + comment.cmtText);
-	var txt:TextField = _level0.createTextField(null, channel[1], FLY_STARTING_X, channel[0], 1, 1);
+	var txt:TextField = _level0.createTextField(null, lvl, FLY_STARTING_X, 1, 1, 1);
 	//trace("createlevel=" + channel[1] + "	" + channel[0] + "	" + txt.text);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
@@ -123,10 +137,13 @@ function fly_comment_new(){
 		txt._visible = false;
 		txt._x = (ytVideo._width - txt.textWidth) / 2;
 	}
-		
-	//显示
-	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
 	
+	//请求通道，并将文本放到通道上
+	var channel = _fly_channel_request(comment, txt);
+	txt._y = channel[0];
+		
+	//显示文本
+	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
 	//设置下一次显示字体的事件
 	fly_var_indexNext++;
 	//trace("fly_comment_new " + fly_var_indexNext + "~~" + fly_var_queueLength);
@@ -179,7 +196,6 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 		txt._x = txtX;
 		//debug = debug + "\n" + ns.time + "," + startTime + "," + timePass + "," + getTimer() + "," + txtX;
 	}
-	//trace(txtX);
 	setTimeout(_fly_move, FLY_FLASH_INTERVAL, txt, speed, startTime, cmtID);
 }
 
@@ -187,17 +203,14 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 var debug:String;
 function _fly_delete(cmtID:Number, txt:TextField){
 	//释放通道
-	trace("delete=" + cmtID + ", " + txt.text);
 	_fly_channel_release(cmtID);
 	//删除文本实例
 	txt.removeTextField();
-	//trace(debug);
 }
 
 //内部 通道占用
 function _fly_channel_occupy(chl){
 	//如果数组空则直接push进去
-	//trace("current = " + _fly_var_channels.length);
 	if(_fly_var_channels.length == 0){
 		_fly_var_channels.push(chl);
 		return false;
@@ -211,7 +224,7 @@ function _fly_channel_occupy(chl){
 		i++;
 	}
 	_fly_var_channels.splice(i, 0, chl);
-	//trace(_fly_var_channels);
+
 }
 	
 
@@ -219,7 +232,6 @@ function _fly_channel_occupy(chl){
 function _fly_channel_release(cmtID){
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i][1].cmtID == cmtID){
-			//trace("release=" + _fly_var_channels[1]);
 			_fly_var_channels.splice(i, 1);
 			i = _fly_var_channels.length;
 		}
@@ -227,13 +239,20 @@ function _fly_channel_release(cmtID){
 }		
 
 //内部 核心 通道请求
-function _fly_channel_request(cmt){
+function _fly_channel_request(cmt, txt:TextField){
 	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
-	var chl = new Array(0, {cmtID:cmt.cmtID, channelBreadth:cmt.fontSize + 2, deathTime:(cmt.sTime + cmt.flySpeed)})
-	
-	//分配层
-	_fly_var_level_accumulator++;
-	var lvl = _fly_var_level_accumulator % FLY_LEVEL_RANGE;
+	var lastCheckShareChannel = 0;
+	var chl = new Array(0, 
+							{
+							cmtID:cmt.cmtID, 
+							channelBreadth:cmt.fontSize + 2, 
+							deathTime:(cmt.sTime + cmt.flySpeed), 
+							textWidth:txt.textWidth, 
+							text:cmt.cmtText, 
+							sTime:cmt.sTime,
+							flyType:cmt.flyType
+							}
+					   	);
 	
 	//分配通道
 	switch(cmt.flyType){
@@ -251,8 +270,6 @@ function _fly_channel_request(cmt){
 			var fFlag = false;
 			var stIndex = _fly_var_channels.length - 1;
 			
-			trace("==============");
-			trace(_fly_var_channels);
 			
 			//查找到已有的通道头小于我们的初始通道尾的通道
 			while(stIndex > 0 && !fFlag){
@@ -275,12 +292,10 @@ function _fly_channel_request(cmt){
 
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
-				trace("--------");
 				trace(chl[0]);
 				while(!fFlag && stIndex >= 0){
 					//如果我们的头通道小于等于他的尾通道，则会发生冲突
 					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
-					trace(chl[0] + "<=" + itTail + ", stIndex=" + stIndex);
 					if(chl[0] <= itTail){
 						//不冲突的话就可以把我们的分配到他头上去
 						chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
@@ -311,8 +326,7 @@ function _fly_channel_request(cmt){
 				chl[0] = chl[0] % modNum + modNum;
 			}
 			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
-			cl[1] = FLY_LEVEL_BOTTOM + lvl;
-			//trace("bottom channel=" + cl[0]);
+			cl[1] = 0;	//废弃行，本来是层编号的
 			break;
 			
 		
@@ -360,18 +374,64 @@ function _fly_channel_request(cmt){
 						}
 					}
 		
-					if(!fFlag){	//否则，计算是否能在该通道占用者消失前使用该通道
-						
-						//……额……这里实现起来比较复杂，先留着……
-						
-						//如果还是不行的话就只能死翘翘了，继续查找吧
-						if(!fFlag){
-							chl[0] = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth + 1;
-							stIndex++;
-							//trace(stIndex + " >= " + _fly_var_channels.length);
-							if(stIndex >= _fly_var_channels.length){
-								fFlag = true;
-							}
+					if(!fFlag && lastCheckShareChannel != _fly_var_channels[stIndex][0]){	//否则，计算是否能在该通道占用者消失前使用该通道
+					/**************
+					·这里的情况比较复杂，共有4种不同的情况，其中的3中情况都有可能让两个字幕共享同一通道
+						·为方便描述，这里做个约定：当前占用通道的字幕称为“前字幕”，试图使用此通道的字幕称为“本字幕”；
+					放置字幕的TextField的左边框成为“字幕头”，右边框称为“字幕尾”
+					·（字幕都是自右向左飞行的）
+					·首先看下表
+					----------------------------------------------------------------------
+					~\	本字幕	前字幕	|	可以共享此通道的条件
+					----------------------------------------------------------------------
+					1	飞行		飞行		|前字幕尾消失前，本字幕头X坐标不能小于飞行范围的X零坐标
+					2	飞行		固定		|前字幕消失前，本字幕头X坐标不能小于前字幕尾的X坐标
+					3	固定		飞行		|本字幕出现前，前字幕尾X坐标必须小于本字幕头X坐标
+					4	固定		固定		|这种情况无论如何不能共享通道
+					----------------------------------------------------------------------
+					·下面就要分开这三种情况编写响应的代码进行判断
+					**************/
+						var ourTime:Number;	//我们字幕的头碰到左边（或碰到现有字幕右边）（或……）的时间
+						var hisTime:Number;	//他们字幕的尾碰到左边（或他们字幕消失）（或……）的时间
+						var prevCmt = _fly_var_channels[stIndex];
+						switch(cmt.flyType){
+							case FLY_TYPE_FLY:
+								if(prevCmt[1].flyType == FLY_TYPE_FLY){	//第1种情况
+									hisTime = prevCmt[1].deathTime;
+									ourTime = cmt.flySpeed * (FLY_STARTING_X / (txt.textWidth + FLY_STARTING_X)) + cmt.sTime;
+									trace("=============");
+									trace("LCSC=" + lastCheckShareChannel + ", prevCmt[0]=" + prevCmt[0]);
+									trace(cmt.cmtText);
+									trace(prevCmt[1].text);
+									trace(ourTime + ">" + hisTime);
+									if(ourTime > hisTime){
+										fFlag = true;
+										//chl[0] += 1;
+									}
+									else{
+										lastCheckShareChannel = prevCmt[0];
+									}
+								}
+								else{	//第2种情况
+									hisTime = prevCmt[1].deathTime;
+									ourTime = 0;
+								}
+								break;
+							case FLY_TYPE_TOP:
+								ourTime = 0;
+								hisTime = prevCmt[1].deathTime;
+								break;
+						}
+						trace("LCSC2=" + lastCheckShareChannel);
+					}
+							
+					//如果还是不行的话就只能死翘翘了，继续查找吧
+					if(!fFlag){
+						chl[0] = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth + 1;
+						stIndex++;
+						//trace(stIndex + " >= " + _fly_var_channels.length);
+						if(stIndex >= _fly_var_channels.length){
+							fFlag = true;
 						}
 					}
 					
@@ -386,13 +446,7 @@ function _fly_channel_request(cmt){
 			//查找终于完毕了
 			cl[0] = chl[0];
 			
-			cl[1] = cmt.flyType + lvl;
-			if(cmt.flyType == FLY_TYPE_FLY){
-				cl[1] += FLY_LEVEL_FLY;
-			}
-			else{
-				cl[1] += FLY_LEVEL_TOP;
-			}
+			cl[1] = 0;		//废弃行，本来是用于层编号的
 			break;
 			
 /*		case FLY_TYPE_TOP:
