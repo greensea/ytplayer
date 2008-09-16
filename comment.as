@@ -250,7 +250,8 @@ function _fly_channel_request(cmt, txt:TextField){
 							textWidth:txt.textWidth, 
 							text:cmt.cmtText, 
 							sTime:cmt.sTime,
-							flyType:cmt.flyType
+							flyType:cmt.flyType,
+							flySpeed:cmt.flySpeed
 							}
 					   	);
 	
@@ -406,7 +407,7 @@ function _fly_channel_request(cmt, txt:TextField){
 										//chl[0] += 1;
 									}
 									else{
-										lastCheckShareChannel = prevCmt[0];
+										lastCheckShareChannel = prevCmt[0];		//这里是防止如果该通道已经共享的话，重复地与此通道中的两个字幕对比
 									}
 								}
 								else{	//第2种情况
@@ -418,8 +419,23 @@ function _fly_channel_request(cmt, txt:TextField){
 								}
 								break;
 							case FLY_TYPE_TOP:
-								ourTime = 0;
-								hisTime = prevCmt[1].deathTime;
+								if(prevCmt[1].flyType == FLY_TYPE_FLY){		//第3种情况
+									//			（						本字幕空隙      +	本字幕长度	  +	前字幕长度）			/	(前字幕总长）
+									hisTime = ((FLY_STARTING_X - txt.textWidth) / 2 + chl[1].textWidth + prevCmt[1].textWidth) / (prevCmt[1].textWidth + FLY_STARTING_X);
+									hisTime = hisTime * prevCmt[1].flySpeed + prevCmt[1].sTime;
+									ourTime = chl[1].sTime;
+									trace("==================");
+									trace(chl[1].text);
+
+									trace(ourTime + ">" + hisTime);
+									if(ourTime > hisTime){
+										fFlag = true;
+									}
+									else{
+										lastCheckShareChannel = prevCmt[0];
+									}
+								}
+
 								break;
 						}
 					}
