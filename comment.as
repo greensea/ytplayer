@@ -52,14 +52,16 @@ function fly_get_xml(url){
 	nsCmt.load("data.xml");
 	
 	nsCmt.onLoad = function(){
-		//trace("length = " + this);
 		var cmts = xml_getElementByTagName(this, "comments").childNodes;
-		//trace(cmts[1].attributes["playTime"]);
 		fly_var_queueLength = 0;
 		fly_var_queue = new Array(cmts.length);
 		for(var i = 0; i < cmts.length; i++){
 			if(cmts[i].nodeName){
-				dgrComments.addItem({片时:_sec2disTime(cmts[i].attributes["playTime"]), 内容:cmts[i].lastChild, 评论时间:_timestamp2date(cmts[i].attributes["commentTime"])});
+				dgrComments.addItem({
+					片时:_sec2disTime(cmts[i].attributes["playTime"]),
+					内容:cmts[i].lastChild, 
+					评论时间:_timestamp2date(cmts[i].attributes["commentTime"])
+					});
 				//压入弹幕数据库
 				var newCmt:Object = {
 					cmtID:cmts[i].attributes["id"],
@@ -125,7 +127,6 @@ function fly_comment_new(){
 	
 	//创建文本实例
 	var txt:TextField = _level0.createTextField(null, lvl, FLY_STARTING_X, 1, 1, 1);
-	//trace("createlevel=" + channel[1] + "	" + channel[0] + "	" + txt.text);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	//txt.antiAliasType = "ADVANCED";
@@ -146,12 +147,10 @@ function fly_comment_new(){
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
 	//设置下一次显示字体的事件
 	fly_var_indexNext++;
-	//trace("fly_comment_new " + fly_var_indexNext + "~~" + fly_var_queueLength);
 	if(fly_var_indexNext < fly_var_queueLength){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
-		//trace("fly_comment_new-->nextTime=" + nextTime + "	" + fly_var_queue[fly_var_indexNext].cmtText);
 	}
 }
 	
@@ -168,7 +167,6 @@ function _fly_comment_get_style(fColor, fSize){
 //评论显示开始
 function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number, cmtID:Number){
 	if(flyType == FLY_TYPE_FLY){		//飘移的字幕
-		//trace("fly_show=" + speed + "=" + startTime + " = " + getTimer());
 		setTimeout(_fly_move, (startTime - _video_get_time()) * 1000, txt, speed, startTime, cmtID);
 	}
 	else{		//定点显示的字幕
@@ -181,7 +179,6 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 	//计算当前字幕的x坐标（可能是负值）
 	var timePass:Number = _video_get_time() - startTime;
-	//trace("_fly_move timePass=" + timePass + " " + getTimer());
 	if(timePass > speed){
 		_fly_delete(cmtID, txt);
 		return false;	//若已经超出时间则退出
@@ -274,7 +271,6 @@ function _fly_channel_request(cmt, txt:TextField){
 			
 			//查找到已有的通道头小于我们的初始通道尾的通道
 			while(stIndex > 0 && !fFlag){
-				//trace(_fly_var_channels[stIndex][0] + "<=" + chl[0] + chl[1].channelBreadth);
 				if(_fly_var_channels[stIndex][0] <= chl[0] + chl[1].channelBreadth){
 					fFlag = true;
 				}
@@ -293,7 +289,6 @@ function _fly_channel_request(cmt, txt:TextField){
 
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
-				trace(chl[0]);
 				while(!fFlag && stIndex >= 0){
 					//如果我们的头通道小于等于他的尾通道，则会发生冲突
 					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
@@ -424,10 +419,6 @@ function _fly_channel_request(cmt, txt:TextField){
 									hisTime = ((FLY_STARTING_X - txt.textWidth) / 2 + chl[1].textWidth + prevCmt[1].textWidth) / (prevCmt[1].textWidth + FLY_STARTING_X);
 									hisTime = hisTime * prevCmt[1].flySpeed + prevCmt[1].sTime;
 									ourTime = chl[1].sTime;
-									trace("==================");
-									trace(chl[1].text);
-
-									trace(ourTime + ">" + hisTime);
 									if(ourTime > hisTime){
 										fFlag = true;
 									}
@@ -452,7 +443,6 @@ function _fly_channel_request(cmt, txt:TextField){
 
 				}
 			}
-			//trace(chl[0] + "	" + chl[1].deathTime);
 			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
 			if(chl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
 				chl[0] = chl[0] % FLY_SUBTITLE_RANGE + Math.round(chl[0] % FLY_SUBTITLE_RANGE);

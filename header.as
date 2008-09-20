@@ -16,3 +16,5 @@ var ns:NetStream;
 #include "init.as"
 #include "_functions.as"
 #include "comment.as"
+#include "commentgrid.as"
+#include "writer.as"
