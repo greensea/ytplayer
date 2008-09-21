@@ -125,7 +125,9 @@ function fly_comment_new(){
 			return false;
 		}
 	}
+	trace("\==============");
 	trace("show " + comment.cmtID + " " + comment.cmtText);
+	
 	
 	//分配层
 	_fly_var_level_accumulator++;
@@ -159,7 +161,7 @@ function fly_comment_new(){
 	//请求通道，并将文本放到通道上
 	var channel = _fly_channel_request(comment, txt);
 	txt._y = channel[0];
-		
+		trace("channel=" + txt._y + ", sTime=" + comment.sTime);
 	//显示文本
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
 	
@@ -494,20 +496,11 @@ function _fly_channel_request(cmt, txt:TextField){
 function comment_add_comment(con, attr){
 	//先查找位置和分配一个ID
 	var id = 0;
-	var index = 0;
 	for(var i = 0; i < fly_var_queue.length; i++){
-		trace(attr.sTime + "<" + fly_var_queue[i].sTime);
-		if(attr.sTime < fly_var_queue[i].sTime){
-			index = i;	//从这里插入
-			i = fly_var_queue.length;	//跳出循环
-		}
+		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 	}
-	for(var i = 0; i < fly_var_queue.length; i++){
-		if(id < fly_var_queue[i].sTime) id = fly_var_queue[i].sTime;
-	}
+	trace("id=" + id);
 	id += ++_comment_user_total;
-trace("id=" + id);
-	trace("sTime=" + attr.sTime);
 	
 	//压入弹幕数据库
 	var newCmt:Object = {
@@ -519,30 +512,37 @@ trace("id=" + id);
 		flyType:attr.flyType,
 		flySpeed:FLY_SPEED_NORMAL //单位：s
 	}
+	trace(id);
+	trace(con);
+	trace(attr.sTime*1);
+	trace(attr.fontColor);
+	trace(attr.fontSize);
+	trace(attr.flyType);
+	trace(newCmt.flySpeed);
 	
-	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
-	
-	fly_var_queue.splice(index, 0, newCmt);
-		trace("push to " + index);
+	//偷懒……直接压到 fly_var_indexNext 这个位置去，然后就不用 _comment_seek 了
+	fly_var_queue.splice(fly_var_indexNext, 0, newCmt);
 	fly_var_queueLength++;
 	
-	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
-	trace(newCmt.sTime);
-	_comment_seek(0);
-	
-	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
+	//看看要不要重启动
+	if(fly_var_indexNext >= fly_var_queueLength - 1) fly_comment_new();
 }
 		
 		
 //重新从 tTime:秒 处开始显示评论
 function _comment_seek(tTime){
+	var needRestart = false;
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
+	trace("indexOrn=" + fly_var_indexNext);
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(tTime <= fly_var_queue[i].sTime){
+			if(fly_var_indexNext >= fly_var_queueLength) needRestart = true;
 			fly_var_indexNext = i;
 			i = fly_var_queue.length;
 		}
 	}		
+	trace("indexSetTo=" + fly_var_indexNext + ", needRestart=" + needRestart);
+	if(needRestart) fly_comment_new();	//如果已经到队尾的话必须重新启动字幕显示进程
 }
 	
 
