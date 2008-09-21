@@ -124,10 +124,7 @@ function fly_comment_new(){
 			_fly_comment_set_nextnew(comment);
 			return false;
 		}
-	}
-	trace("\==============");
-	trace("show " + comment.cmtID + " " + comment.cmtText);
-	
+	}	
 	
 	//分配层
 	_fly_var_level_accumulator++;
@@ -161,7 +158,7 @@ function fly_comment_new(){
 	//请求通道，并将文本放到通道上
 	var channel = _fly_channel_request(comment, txt);
 	txt._y = channel[0];
-		trace("channel=" + txt._y + ", sTime=" + comment.sTime);
+	
 	//显示文本
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
 	
@@ -353,10 +350,12 @@ function _fly_channel_request(cmt, txt:TextField){
 		
 		//默认的飘移字幕和顶部字幕的通道分配
 		default:
+		trace("===================");
+		trace(txt.text);
 		
 			//从头开始查找可用的通道，直到字幕红线为止
 			var fFlag = false;
-			//先设置查找初始数组索引，从通道ID为0处开始查找
+			//先设置查找初始数组索引，直到找到通道0为止
 			var stIndex = 0;
 			if(_fly_var_channels.length != 0){
 				while(!fFlag && stIndex <= _fly_var_channels.length){
@@ -367,7 +366,7 @@ function _fly_channel_request(cmt, txt:TextField){
 						stIndex++;
 					}
 				}
-				//如果到了数组末尾还找不到大于0的通道就可以从分配通道1
+				//如果到了数组末尾还找不到大于0的通道就可以从通道1开始分配
 				if(stIndex == _fly_var_channels.length){
 					fFlag = true;
 					chl[0] = 1;
@@ -375,8 +374,10 @@ function _fly_channel_request(cmt, txt:TextField){
 				else{
 					fFlag = false;
 				}
+				if(cmt.cmtID==5)trace("search=" + stIndex);
 			}
-		
+			if(cmt.cmtID==5)trace("ornIndex=" + chl[0]);
+
 			//循环查找可用的通道
 			while(!fFlag){
 				chl[0]++;
@@ -384,7 +385,7 @@ function _fly_channel_request(cmt, txt:TextField){
 					fFlag = true;
 				}
 				else{			//否则就要查找可用的通道
-					if(_fly_var_channels[stIndex][0] >= chl[0] + chl[1].channelBreadth){		//如果该通道头大于本通道尾，继续判断
+					if(_fly_var_channels[stIndex][0] >= chl[0] + chl[1].channelBreadth){		//如果前通道头大于本通道尾，继续判断
 						//还要判断我们的通道尾有没有超过下一个通道的头
 						if(stIndex + 1 == _fly_var_channels.length){	//后面已经没有通道了，可以分配
 							fFlag = true;
@@ -393,7 +394,6 @@ function _fly_channel_request(cmt, txt:TextField){
 							fFlag = true;
 						}
 					}
-					
 					if(!fFlag && lastCheckShareChannel != _fly_var_channels[stIndex][0]){	//否则，计算是否能在该通道占用者消失前使用该通道
 					/**************
 					·这里的情况比较复杂，共有4种不同的情况，其中的3中情况都有可能让两个字幕共享同一通道
@@ -422,8 +422,11 @@ function _fly_channel_request(cmt, txt:TextField){
 									//这里注意，这里偷懒了点。如果前字幕是一个比屏幕还长的字幕的话，可能这时候这个字幕还没有完全显示出来，
 									//这个时候如果共享通道的话，就会发生冲突
 									//现在仅仅判断前字幕是否过长，其实可以判断前字幕是否已经完全显示出来，偷懒了 = =  
+									if(cmt.cmtID==5)trace(prevCmt[0] + " | stIndex=" + stIndex);
+									if(cmt.cmtID==5)trace(_fly_var_channels[stIndex][1].text);
 									if(ourTime >= hisTime && prevCmt[1].textWidth < FLY_STARTING_X){
 										fFlag = true;
+										if(cmt.cmtID == 5) trace("fFlag=" + fFlag + ", channel=" + chl[0]);
 										//chl[0] += 1;
 									}
 									else{
@@ -473,10 +476,20 @@ function _fly_channel_request(cmt, txt:TextField){
 				chl[0] = chl[0] % FLY_SUBTITLE_RANGE + Math.round(chl[0] % FLY_SUBTITLE_RANGE);
 			}
 			
+			//！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+			//弱弱地尝试一下仅允许偶数通道，懒得去查找是哪里造成了本来可以使用同一通道的两个字幕使用了相差为1的两个通道
+			//虽然是很XXOO的解决方法，极有可能失败，但还是试一下吧
+			//--不行，++才行
+			if(chl[0] / 2 == Math.round(chl[0] / 2)){
+				chl[0]++;
+			}
+			
 			//查找终于完毕了
 			cl[0] = chl[0];
 			
 			cl[1] = 0;		//废弃行，本来是用于层编号的
+			
+					trace("channel=" + chl[0]);
 			break;
 			
 /*		case FLY_TYPE_TOP:
@@ -499,7 +512,6 @@ function comment_add_comment(con, attr){
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 	}
-	trace("id=" + id);
 	id += ++_comment_user_total;
 	
 	//压入弹幕数据库
@@ -533,7 +545,6 @@ function comment_add_comment(con, attr){
 function _comment_seek(tTime){
 	var needRestart = false;
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
-	trace("indexOrn=" + fly_var_indexNext);
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(tTime <= fly_var_queue[i].sTime){
 			if(fly_var_indexNext >= fly_var_queueLength) needRestart = true;
@@ -541,7 +552,6 @@ function _comment_seek(tTime){
 			i = fly_var_queue.length;
 		}
 	}		
-	trace("indexSetTo=" + fly_var_indexNext + ", needRestart=" + needRestart);
 	if(needRestart) fly_comment_new();	//如果已经到队尾的话必须重新启动字幕显示进程
 }
 	
