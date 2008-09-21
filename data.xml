@@ -4,8 +4,8 @@
 		<flvURL></flvURL>
 	</video>
 	<comments>
-		<comment id="1" fontSize="" flySpeed="normal" fontColor="ffffff" flyType="bottom" isSubtitle="0" playTime="0.1" commentTime="1223217200">囧的</comment>
-		<comment id="2" fontSize="" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="0" playTime="0.5" commentTime="1221214233">メルト2M MIX(高音质版本)</comment>
+		<comment id="1" fontSize="" flySpeed="normal" fontColor="ffffff" flyType="fly" isSubtitle="0" playTime="0.1" commentTime="1223217200">囧的</comment>
+<!--		<comment id="2" fontSize="" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="0" playTime="0.5" commentTime="1221214233">メルト2M MIX(高音质版本)</comment>
 		<comment id="3" fontSize="" flySpeed="normal" fontColor="ff0000" flyType="bottom" isSubtitle="0" playTime="3.2" commentTime="1225869960">这条是测试的评论~</comment>
 		<comment id="4" fontSize="" flySpeed="normal" fontColor="0000ff" flyType="" isSubtitle="0" playTime="3.8" commentTime="1221217250">fly_comment_new--nextTime=99.9999999999996~</comment>
 		<comment id="5" fontSize="" flySpeed="normal" fontColor="00ffff" flyType="top" isSubtitle="0" playTime="4.84" commentTime="1221217260">合唱_ニコニコ動画流星群+ version 1.3</comment>
@@ -16,7 +16,7 @@
 		<comment id="10" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="8.54" commentTime="1221217286">初音miku - 私の時間.</comment>
 		<comment id="11" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="9.54" commentTime="1221217376">这是一曲非常经典的歌，慢慢欣赏吧.</comment>
 		<comment id="12" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="10" commentTime="1221217286">仰望蔚蓝的天空 感受迎面扑来的清风</comment>
-		<comment id="13" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="13" commentTime="1221217290">纯洁无暇的心灵 始终有一片广阔天地</comment>
+		<comment id="13" fontSize="small" flySpeed="normal" fontColor="00ff00" flyType="bottom" isSubtitle="1" playTime="13" commentTime="1221217290">纯洁无暇的心灵 始终有一片广阔天地</comment>-->
 	</comments>
 </ytPlayer>
 
