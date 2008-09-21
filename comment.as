@@ -1,4 +1,6 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
+
+//定义全局常量
 var FLY_SPEED_FAST:Number = 2.5;		//快字幕速度：秒
 var FLY_SPEED_NORMAL:Number = 4;	//中等速度字幕：秒
 var FLY_SPEED_SLOW:Number = 5.5;		//慢字幕速度：秒
@@ -25,6 +27,8 @@ var FLY_SUBTITLE_RANGE:Number = FLY_FONTSIZE_SUBTITLE * FLY_SUBTITLE_LINES;		//�
 var FLY_STARTING_X:Number = ytVideo._width;		//字幕初始位置：相对与影片
 var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
 
+
+
 /* a1 表示评论位置， a0 表示是否飘移 */
 var fly_type:Object ={top:0x2, bottom:0x0, fly:0x3};
 /*
@@ -41,6 +45,9 @@ var _fly_var_channels:Array = new Array();		//Array(channelID, {cmtID:Number, ch
 var fly_subtitle_redline = ytVideo._height;			//当前字幕所占据的高度
 var _fly_var_level_accumulator = 0;
 
+var _comment_var_display = true;		//是否显示评论
+var _comment_user_total = 0;		//记录用户在本页面发表的评论总数
+
 fly_get_xml();
 
 
@@ -48,6 +55,7 @@ fly_get_xml();
 //获取字幕源XML
 function fly_get_xml(url){
 	var nsCmt = new XML();
+	nsCmt.ignoreWhitespace = true;
 	tip_add("读取评论…");
 	nsCmt.load("data.xml");
 	
@@ -109,6 +117,15 @@ function fly_get_xml(url){
 //字幕队列控制，出队列
 function fly_comment_new(){
 	var comment = fly_var_queue[fly_var_indexNext];
+
+	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
+	for(var i = 0; i < _fly_var_channels.length; i++){
+		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
+			_fly_comment_set_nextnew(comment);
+			return false;
+		}
+	}
+	trace("show " + comment.cmtID + " " + comment.cmtText);
 	
 	//分配层
 	_fly_var_level_accumulator++;
@@ -126,7 +143,7 @@ function fly_comment_new(){
 	}
 	
 	//创建文本实例
-	var txt:TextField = _level0.createTextField(null, lvl, FLY_STARTING_X, 1, 1, 1);
+	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	//txt.antiAliasType = "ADVANCED";
@@ -145,7 +162,12 @@ function fly_comment_new(){
 		
 	//显示文本
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
-	//设置下一次显示字体的事件
+	
+	_fly_comment_set_nextnew(comment);
+}
+
+//设置下一次显示字体的事件（你要说是时间也可以……不过这里写的就是事件没错）
+function _fly_comment_set_nextnew(comment){
 	fly_var_indexNext++;
 	if(fly_var_indexNext < fly_var_queueLength){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
@@ -238,6 +260,7 @@ function _fly_channel_release(cmtID){
 //内部 核心 通道请求
 function _fly_channel_request(cmt, txt:TextField){
 	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
+	/*数据结构定义*/
 	var lastCheckShareChannel = 0;
 	var chl = new Array(0, 
 							{
@@ -467,6 +490,77 @@ function _fly_channel_request(cmt, txt:TextField){
 	return cl;
 }
 
+//添加新评论
+function comment_add_comment(con, attr){
+	//先查找位置和分配一个ID
+	var id = 0;
+	var index = 0;
+	for(var i = 0; i < fly_var_queue.length; i++){
+		trace(attr.sTime + "<" + fly_var_queue[i].sTime);
+		if(attr.sTime < fly_var_queue[i].sTime){
+			index = i;	//从这里插入
+			i = fly_var_queue.length;	//跳出循环
+		}
+	}
+	for(var i = 0; i < fly_var_queue.length; i++){
+		if(id < fly_var_queue[i].sTime) id = fly_var_queue[i].sTime;
+	}
+	id += ++_comment_user_total;
+trace("id=" + id);
+	trace("sTime=" + attr.sTime);
+	
+	//压入弹幕数据库
+	var newCmt:Object = {
+		cmtID:id,
+		cmtText:con,
+		sTime:(attr.sTime * 1),	//单位：s，基于影片开始的时间戳
+		fontColor:attr.fontColor,
+		fontSize:attr.fontSize,
+		flyType:attr.flyType,
+		flySpeed:FLY_SPEED_NORMAL //单位：s
+	}
+	
+	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
+	
+	fly_var_queue.splice(index, 0, newCmt);
+		trace("push to " + index);
+	fly_var_queueLength++;
+	
+	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
+	trace(newCmt.sTime);
+	_comment_seek(0);
+	
+	trace("nextIndex=" + fly_var_indexNext + ", length=" + fly_var_queue.length);
+}
+		
+		
+//重新从 tTime:秒 处开始显示评论
+function _comment_seek(tTime){
+	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
+	for(var i = 0; i < fly_var_queue.length; i++){
+		if(tTime <= fly_var_queue[i].sTime){
+			fly_var_indexNext = i;
+			i = fly_var_queue.length;
+		}
+	}		
+}
+	
+
+
+//评论显示与否
+function comment_display(btn){
+	_comment_var_display = !_comment_var_display;
+	if(_comment_var_display){
+		btn.label = "隐藏评论";
+		btn.setStyle("color", 0x000000);
+		btn.setStyle("fontWeight", "");
+	}
+	else{
+		btn.label = "显示评论";
+		btn.setStyle("color", 0x006600);
+		btn.setStyle("fontWeight", "bold");
+	}
+}
 
 //囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
 function xml_getElementByTagName(xml, nodeName){
