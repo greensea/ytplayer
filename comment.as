@@ -115,8 +115,37 @@ function fly_get_xml(url){
 
 
 //字幕队列控制，出队列
-function fly_comment_new(){
-	var comment = fly_var_queue[fly_var_indexNext];
+//						（指定显示特定的评论，无论何种情况都强制显示）
+function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
+	//设置函数参数默认值
+	if(!enforceFlag) autoNext = false;
+	if(!nextQueueIndex) nextQueueIndex = -1;
+	
+	//-----判断本次是否需要执行此函数，不需要则设置下一次执行时间，并退出
+	var toExit = false;
+	
+	//视频没有在播放则不显示
+	if(!video_var_playing) toExit = true;
+	
+	
+	//是否退出
+	if(toExit && !enforce){
+		setTimeout(fly_comment_new, FLASH_INTERVAL);
+		return false;
+	}
+	
+	//----下面才是正式的开始
+
+	var comment;
+	switch(nextQueueIndex){
+		case -1:	//如果没有指定需要显示的字幕，则显示fly_var_indexNext指定的字幕
+			comment = fly_var_queue[fly_var_indexNext];
+			break;
+		default:
+			comment = fly_var_queue[nextQueueIndex];
+			break;
+	}
+			
 
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
@@ -126,6 +155,14 @@ function fly_comment_new(){
 		}
 	}	
 	
+	_fly_comment_putScreen(comment);
+	
+	if(nextQueueIndex == -1) _fly_comment_set_nextnew(comment);		//只有显示非指定评论时才自动显示下一个，否则停止
+}
+
+//把字幕放到屏幕上，并将字幕转交动画函数
+//不用进行任何判断，判断都在fly_comment_new()函数中完成，这函数只管put上去并移交给动画控制就行了
+function _fly_comment_putScreen(comment){
 	//分配层
 	_fly_var_level_accumulator++;
 	var lvl = _fly_var_level_accumulator % FLY_LEVEL_RANGE;
@@ -161,9 +198,8 @@ function fly_comment_new(){
 	
 	//显示文本
 	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
-	
-	_fly_comment_set_nextnew(comment);
 }
+
 
 //设置下一次显示字体的事件（你要说是时间也可以……不过这里写的就是事件没错）
 function _fly_comment_set_nextnew(comment){
@@ -172,6 +208,9 @@ function _fly_comment_set_nextnew(comment){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
+	}
+	else{	//如果已经到末尾的话，就按照FLASH_INTERVAL的频率监控
+		setTimeout(fly_comment_new, FLASH_INTERVAL);
 	}
 }
 	
@@ -198,12 +237,14 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 
 //内部 刷新评论位置
 function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
-	//计算当前字幕的x坐标（可能是负值）
+	//若已经超出时间则退出
 	var timePass:Number = _video_get_time() - startTime;
-	if(timePass > speed){
+	if(timePass > speed || timePass <= 0){
 		_fly_delete(cmtID, txt);
-		return false;	//若已经超出时间则退出
+		return false;	
 	}
+	
+	//计算当前字幕的x坐标（可能是负值）
 	var txtX = (FLY_STARTING_X + txt.textWidth) * (timePass / speed);		//字幕离开起点的距离
 	txtX = FLY_STARTING_X - txtX;
 	if(video_var_playing && false){
@@ -220,6 +261,20 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 //内部 删除评论
 var debug:String;
 function _fly_delete(cmtID:Number, txt:TextField){
+	var cmt = null;
+	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
+	for(var i = 0; i < _fly_var_channels.length; i++){
+		if(_fly_var_channels[i][1].cmtID == cmtID){
+			cmt = _fly_var_channels[i][1];
+			i = _fly_var_channels.length;
+		}
+	}
+	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
+	if(leaveTime > 0 && leaveTime <= cmt.flySpeed){
+		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
+		return false;
+	}
+	
 	//释放通道
 	_fly_channel_release(cmtID);
 	//删除文本实例
@@ -350,8 +405,6 @@ function _fly_channel_request(cmt, txt:TextField){
 		
 		//默认的飘移字幕和顶部字幕的通道分配
 		default:
-		trace("===================");
-		trace(txt.text);
 		
 			//从头开始查找可用的通道，直到字幕红线为止
 			var fFlag = false;
@@ -374,9 +427,7 @@ function _fly_channel_request(cmt, txt:TextField){
 				else{
 					fFlag = false;
 				}
-				if(cmt.cmtID==5)trace("search=" + stIndex);
 			}
-			if(cmt.cmtID==5)trace("ornIndex=" + chl[0]);
 
 			//循环查找可用的通道
 			while(!fFlag){
@@ -422,11 +473,8 @@ function _fly_channel_request(cmt, txt:TextField){
 									//这里注意，这里偷懒了点。如果前字幕是一个比屏幕还长的字幕的话，可能这时候这个字幕还没有完全显示出来，
 									//这个时候如果共享通道的话，就会发生冲突
 									//现在仅仅判断前字幕是否过长，其实可以判断前字幕是否已经完全显示出来，偷懒了 = =  
-									if(cmt.cmtID==5)trace(prevCmt[0] + " | stIndex=" + stIndex);
-									if(cmt.cmtID==5)trace(_fly_var_channels[stIndex][1].text);
 									if(ourTime >= hisTime && prevCmt[1].textWidth < FLY_STARTING_X){
 										fFlag = true;
-										if(cmt.cmtID == 5) trace("fFlag=" + fFlag + ", channel=" + chl[0]);
 										//chl[0] += 1;
 									}
 									else{
@@ -489,7 +537,6 @@ function _fly_channel_request(cmt, txt:TextField){
 			
 			cl[1] = 0;		//废弃行，本来是用于层编号的
 			
-					trace("channel=" + chl[0]);
 			break;
 			
 /*		case FLY_TYPE_TOP:
@@ -507,10 +554,16 @@ function _fly_channel_request(cmt, txt:TextField){
 
 //添加新评论
 function comment_add_comment(con, attr){
-	//先查找位置和分配一个ID
+	//先查找位置和分配一个ID，顺便插入位置
 	var id = 0;
+	var insertPos = 0;
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
+		trace(attr.sTime + " < " + fly_var_queue[i].sTime);
+		if(attr.sTime > fly_var_queue[i].sTime){
+			insertPos++;
+			trace(insertPos + " is insertPos");
+		}
 	}
 	id += ++_comment_user_total;
 	
@@ -524,6 +577,7 @@ function comment_add_comment(con, attr){
 		flyType:attr.flyType,
 		flySpeed:FLY_SPEED_NORMAL //单位：s
 	}
+	trace("=======Add New Comment=============");
 	trace(id);
 	trace(con);
 	trace(attr.sTime*1);
@@ -531,19 +585,21 @@ function comment_add_comment(con, attr){
 	trace(attr.fontSize);
 	trace(attr.flyType);
 	trace(newCmt.flySpeed);
+	trace("==================================");
 	
 	//偷懒……直接压到 fly_var_indexNext 这个位置去，然后就不用 _comment_seek 了
-	fly_var_queue.splice(fly_var_indexNext, 0, newCmt);
+	fly_var_queue.splice(insertPos, 0, newCmt);
 	fly_var_queueLength++;
 	
 	//看看要不要重启动
-	if(fly_var_indexNext >= fly_var_queueLength - 1) fly_comment_new();
+	//if(fly_var_indexNext >= fly_var_queueLength - 1) fly_comment_new();
 }
 		
 		
 //重新从 tTime:秒 处开始显示评论
 function _comment_seek(tTime){
 	var needRestart = false;
+	var chl = null;
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(tTime <= fly_var_queue[i].sTime){
@@ -551,8 +607,22 @@ function _comment_seek(tTime){
 			fly_var_indexNext = i;
 			i = fly_var_queue.length;
 		}
-	}		
-	if(needRestart) fly_comment_new();	//如果已经到队尾的话必须重新启动字幕显示进程
+	}
+	
+	//扫描通道列表，删除在这个时间不应该显示的弹幕所占用的通道
+	var delList:Array = new Array();
+	for(var i = 0; i < _fly_var_channels.length; i++){
+		chl = _fly_var_channels[i];
+		if(tTime < chl[1].sTime || tTime > chl[1].sTime + chl[1].flySpeed){
+			delList.push(chl[1].cmtID);
+		}
+	}
+	for(var i = 0; i < delList.length; i++){
+		_fly_channel_release(delList[i]);
+	}
+
+	
+	//if(needRestart) fly_comment_new();	//如果已经到队尾的话必须重新启动字幕显示进程
 }
 	
 
