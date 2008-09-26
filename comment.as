@@ -186,8 +186,11 @@ function _fly_comment_putScreen(comment){
 	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
-	//txt.antiAliasType = "ADVANCED";
-	//txt.sharpness = 400;			
+	txt.antiAliasType = "ADVANCED";
+	txt.sharpness = 400;			
+	txt.thickness = 200;
+
+
 	//设置样式
 	txt.setTextFormat(_fly_comment_get_style(comment.fontColor, comment.fontSize));
 	//设置非飘移字体的位置

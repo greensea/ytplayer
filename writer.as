@@ -15,6 +15,8 @@ function writer_submit(){
 	var playTime = _video_get_time() - 0.1;	//把评论时间提前0.1s
 	if(playTime <= 0) playTime = 0.1;			//另外0.1s之前不允许评论
 	
+	trace(ns.time);
+	
 	//添加新的评论到屏幕上
 	var newCmt = Array(t.text, {fontSize:_writer_var_fontsize, 
 								 fontColor:_writer_var_fontcolor,
