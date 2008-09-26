@@ -62,7 +62,7 @@ function fly_get_xml(url){
 	nsCmt.onLoad = function(){
 		var cmts = xml_getElementByTagName(this, "comments").childNodes;
 		fly_var_queueLength = 0;
-		fly_var_queue = new Array(cmts.length);
+		fly_var_queue = new Array();
 		for(var i = 0; i < cmts.length; i++){
 			if(cmts[i].nodeName){
 				dgrComments.addItem({
@@ -109,6 +109,7 @@ function fly_get_xml(url){
 				fly_var_queueLength++;
 			}
 		}		
+		;
 		fly_comment_new();
 	}
 }
@@ -126,6 +127,9 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 	
 	//视频没有在播放则不显示
 	if(!video_var_playing) toExit = true;
+	
+	//如果需要显示的评论编号超出队列长度则不显示
+	if(nextQueueIndex >= fly_var_queueLength || fly_var_indexNext >= fly_var_queueLength) toExit = true;
 	
 	
 	//是否退出
@@ -146,7 +150,7 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 			break;
 	}
 			
-
+trace("color=" + comment.fontColor + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
@@ -559,10 +563,8 @@ function comment_add_comment(con, attr){
 	var insertPos = 0;
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
-		trace(attr.sTime + " < " + fly_var_queue[i].sTime);
 		if(attr.sTime > fly_var_queue[i].sTime){
 			insertPos++;
-			trace(insertPos + " is insertPos");
 		}
 	}
 	id += ++_comment_user_total;
@@ -572,30 +574,39 @@ function comment_add_comment(con, attr){
 		cmtID:id,
 		cmtText:con,
 		sTime:(attr.sTime * 1),	//单位：s，基于影片开始的时间戳
-		fontColor:attr.fontColor,
+		fontColor:attr.fontColor.toString(16),
 		fontSize:attr.fontSize,
 		flyType:attr.flyType,
 		flySpeed:FLY_SPEED_NORMAL //单位：s
 	}
-	trace("=======Add New Comment=============");
+/*	trace("=======Add New Comment=============");
 	trace(id);
 	trace(con);
 	trace(attr.sTime*1);
-	trace(attr.fontColor);
-	trace(attr.fontSize);
+	trace("fontColor=" + attr.fontColor);
+	trace("fontSize=" + attr.fontSize);
 	trace(attr.flyType);
 	trace(newCmt.flySpeed);
 	trace("==================================");
+*/
+	//添加到右部评论
+	dgrComments.addItem({
+		片时:_sec2disTime(attr.sTime),
+		内容:con, 
+		评论时间:_date2date(new Date())
+	});
 	
 	//偷懒……直接压到 fly_var_indexNext 这个位置去，然后就不用 _comment_seek 了
 	fly_var_queue.splice(insertPos, 0, newCmt);
 	fly_var_queueLength++;
 	
+	fly_comment_new(insertPos, true);
+	
 	//看看要不要重启动
 	//if(fly_var_indexNext >= fly_var_queueLength - 1) fly_comment_new();
 }
 		
-		
+
 //重新从 tTime:秒 处开始显示评论
 function _comment_seek(tTime){
 	var needRestart = false;
