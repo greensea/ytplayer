@@ -2,6 +2,13 @@
 /*******	init.as			***********/
 /**************************************/
 
+init_main();
+
+function init_main(){
+	flyTypeWindow._visible = false;
+}
+
+
 function _init_dgrComments(){
 	//import mx.controls.DataGrid;
 	//var dgrComments:DataGrid;

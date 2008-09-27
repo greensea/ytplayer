@@ -32,3 +32,65 @@ function writer_submit(){
 	writer_send(newCmt[0], newCmt[1]);
 	t.text = "";
 }
+
+//评论样式窗口显示关闭
+function writer_flytype_window_hide(){
+	_level0.flyTypeWindow._visible = false;
+}
+function writer_flytype_window_show(){
+	_level0.flyTypeWindow._visible = true;
+}
+
+//=====v====v======v======评论样式设置部分========
+function writer_flytype_set(t){
+	switch(t){
+		case "top":
+			_writer_var_commentmode = FLY_TYPE_TOP;
+			break;
+		case "bottom":
+			_writer_var_commentmode = FLY_TYPE_BOTTOM;
+			break;
+		case "subtitle":
+			_writer_var_commentmode = FLY_TYPE_SUBTITLE;
+			break;
+		default:
+			_writer_var_commentmode = FLY_TYPE_FLY;
+			break;
+	}
+	
+	if(t == "subtitle"){
+		_writer_subtitle_enable(true);
+	}
+	else{
+		_writer_subtitle_enable(false);
+	}
+	
+	writer_flytype_window_hide();
+}
+
+function writer_fontsize_set(s){
+	var found = false;
+	//查询此s值在列表中的位置
+	var l:List = commentWriter.cmbWriterFontSize;
+	for(var i = 0; i < l.length; i++){
+		if(l.getItemAt(i).data == s){
+			l.selectedIndex = i;
+			found = true;
+			i = l.length;
+		}
+	}
+	if(!found){
+		_writer_var_fontsize = FLY_FONTSIZE_NORMAL;
+	}
+}
+	
+	
+function _writer_subtitle_enable(flag){
+	_writer_var_issubtitle = flag;
+	if(flag){
+		writer_fontsize_set(FLY_FONTSIZE_SUBTITLE);
+	}
+	commentWriter.cmbWriterFontSize.enabled = !flag;
+	trace("setto=" + commentWriter.cmbWriterFontSize.enabled);
+}
+//==^=====^====^======评论样式设置部分========
