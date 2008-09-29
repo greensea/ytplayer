@@ -20,3 +20,4 @@ var ns:NetStream;
 #include "comment.as"
 #include "commentgrid.as"
 #include "writer.as"
+#include "net.as"
