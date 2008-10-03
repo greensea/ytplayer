@@ -20,12 +20,14 @@ if( $字体 != FLY_FONTSIZE_BIG ||
 	$字体 != FLY_FONTSIZE_SMALL		){
 		$字体 = FLY_FONTSIZE_DEFAULT;
 }
-if( $模式 != FLY_MODE_FLY ||
-	$模式 != FLY_MODE_FLY ||
-	$模式 != FLY_MODE_FLY	){
+$模式 = intval($模式);
+if( $模式 != FLY_MODE_BOTTOM &&
+	$模式 != FLY_MODE_TOP &&
+	$模式 != FLY_MODE_SUBTITLE	){
 		$模式 = FLY_MODE_DEFAULT;
 }
 if($颜色 == '') $颜色 = 0xffffff;
+echo $模式;
 
 //判断动画是否存在或允许评论
 $语句 = "SELECT 编号 FROM 动画 WHERE 编号=$动画编号";

@@ -4,7 +4,6 @@
 /**************************************/
 
 var video_querystring_p = null;
-var video_querystring_p = 1;
 var video_var_flvid = 0;
 var video_var_relocated:Boolean = false;
 
@@ -12,6 +11,15 @@ init_main();
 video_init();
 
 function video_init(){
+	//获取函数并判断是什么类型的
+	if(_root.b.length != parseInt(_root.b).toString().length){
+		video_querystring_p = _root.b;
+	}
+	else{
+		video_querystring_p = parseInt(_root.b);
+	}
+	if(!_root.b) video_querystring_p = 1;
+	
 	var url = URL_PREFIX + "playinfo.php?relocate=0&";
 	if(typeof(video_querystring_p) == "number"){
 		url += "id=" + video_querystring_p;
@@ -28,7 +36,7 @@ function video_init(){
 		//先判断是否错误
 		var e = xml_getElementByTagName(this, "error");
 		if(e){
-			tip_add(e.childNode[0]);
+			tip_add("错误：" + e.childNodes[0].nodeValue);
 			return false;
 		}
 		
@@ -55,15 +63,15 @@ function video_relocate(){
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;
 	xmlvideo.load(url);
-	tip_add("动画打开失败，正在重定位...")
 	xmlvideo.onLoad = function(){
 		var e = xml_getElementByTagName(this, "error");
 		if(e){
-			tip_add(e.childNode[0]);
+			tip_add("错误：" + e.childNodes[0].nodeValue);
 			return false;
 		}
 		video_var_flvurl = xml_getElementByTagName(this, "flvURL").childNodes[0].nodeValue;
 		video_var_relocated = true;
+		tip_add("重定位完毕，正在连接...");
 		video_play();
 	}
 }

@@ -15,7 +15,7 @@ var FLY_FONTCOLOR_DEFAULT:Number = 0xffffff;		//默认字体颜色：白
 var FLY_TYPE_TOP:Number = 0x2;
 var FLY_TYPE_BOTTOM:Number = 0x0;
 var FLY_TYPE_FLY:Number = 0x3;
-var FLY_TYPE_SUBTITLE:Number = FLY_TYPE_BOTTOM;
+var FLY_TYPE_SUBTITLE:Number = 0x4;
 
 var FLY_LEVEL_RANGE:Number = 1000;
 var FLY_LEVEL_FLY:Number = FLY_LEVEL_RANGE;

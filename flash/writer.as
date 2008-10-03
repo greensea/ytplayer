@@ -26,6 +26,7 @@ function writer_submit(){
 								 isSubtitle:_writer_var_issubtitle,
 								 commentTime:(new Date())
 						});
+	if(_writer_var_issubtitle) newCmt[1].flyType = FLY_TYPE_SUBTITLE;
 	comment_add_comment(newCmt[0], newCmt[1])
 	
 	//提交评论到服务器
@@ -42,6 +43,7 @@ function writer_send(con, attr){
 				"&id=" + video_var_flvid;
 	var xml = new XML();
 	xml.load(url);
+	trace(url);
 }
 
 
@@ -82,11 +84,13 @@ function writer_flytype_set(t){
 
 function writer_fontsize_set(s){
 	var found = false;
+	trace(s);
 	//查询此s值在列表中的位置
 	var l:List = commentWriter.cmbWriterFontSize;
 	for(var i = 0; i < l.length; i++){
 		if(l.getItemAt(i).data == s){
 			l.selectedIndex = i;
+			_writer_var_fontsize = s;
 			found = true;
 			i = l.length;
 		}
@@ -94,6 +98,7 @@ function writer_fontsize_set(s){
 	if(!found){
 		_writer_var_fontsize = FLY_FONTSIZE_NORMAL;
 	}
+	trace("_wirter_fontsize=" + _writer_var_fontsize);
 }
 	
 	
