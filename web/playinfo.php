@@ -3,6 +3,7 @@ require_once('类文件/头.php');
 
 $可扩展标记语言。评论元素 = '';
 $可扩展标记语言 = '';
+$动画数组 = $弹幕数组 = null;
 
 //载入模板
 $可扩展标记语言模板。评论元素 = file_get_contents('模板/闪弹幕数据。评论元素.xml');
@@ -12,11 +13,33 @@ $可扩展标记语言模板 = file_get_contents('模板/闪弹幕数据.xml');
 $是否重定位 = ($_GET['relocate'] == 1);
 $动画编号 = intval($_GET['id']);
 
+
 //读弹幕和动画数据
-$语句 = "SELECT 播放数,标题,说明,缩略图路径,地址,源页面 FROM 动画 WHERE 编号=$动画编号";
-$动画数组 = $数据库->查询($语句);
-$语句 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 弹幕 WHERE 动画编号=$动画编号";
-$弹幕数组 = $数据库->查询($语句);
+if(!$动画编号){
+	$源页面转义 = $数据库->查询语句转义($_GET['source']);
+	if($源页面转义 == '') over('id和source皆未定义');
+
+	$语句 = "SELECT 编号,播放数,标题,说明,缩略图路径,地址,源页面 FROM 动画 WHERE 源页面='$源页面转义'";
+	echo $语句;
+	$动画数组 = $数据库->查询($语句);
+	if($动画数组){
+		$动画编号 = $动画数组[0]['编号'];
+	}
+	else{
+		if(!$邀踢动画->新建动画数据('', '', $_GET['source'], '')) over('指定的视频不存在');
+		$语句 = "SELECT MAX(编号) FROM 动画";
+		$结果 = $数据库->查询($语句);
+		$动画编号 = $结果[0][''];
+	}
+}
+
+$语句一 = "SELECT 播放数,标题,说明,缩略图路径,地址,源页面 FROM 动画 WHERE 编号=$动画编号";
+$语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 弹幕 WHERE 动画编号=$动画编号";
+
+if(!$动画数组) $动画数组 = $数据库->查询($语句一);
+
+echo $语句二;
+$弹幕数组 = $数据库->查询($语句二);
 
 $影片地址 = $动画数组[0]['地址'];
 $播放次数 = $动画数组[0]['播放数'];
@@ -68,8 +91,6 @@ for($i = 0; $i < count($弹幕数组); $i++){
 															htmlspecialchars($弹幕数组[$i]['内容'])
 												);
 															
-
-	//	<comment id="%d" fontSize="%s" flySpeed="%s" fontColor="%6x" flyType="%s" isSubtitle="%d" playTime="%f" commentTime="%d">%s</comment>
 }
 
 $可扩展标记语言 = sprintf($可扩展标记语言模板, 
@@ -80,11 +101,12 @@ $可扩展标记语言 = sprintf($可扩展标记语言模板,
 										$可扩展标记语言。评论元素
 									);
 
-echo htmlspecialchars($可扩展标记语言);
+//echo htmlspecialchars($可扩展标记语言);
+ob_clean();
+header("Content-Type: text/xml; charset=utf-8"); 
+echo mb_convert_encoding($可扩展标记语言, 'utf-8', 'gb2312');
 
-
-
-
+/*********************************************/
 
 function 重定位动画(){
 	global $动画数组;
@@ -103,11 +125,22 @@ function 重定位动画(){
 	}
 
 	$重定位动画模板 = file_get_contents('模板/重定位动画.xml');
-	$重定位动画 = sprintf($重定位动画模板, htmlspecialchars($新地址));
+	$重定位动画 = sprintf($重定位动画模板, $新地址);
 	
-	echo htmlspecialchars($重定位动画);
+	ob_clean();
+	header("Content-Type: text/xml; charset=utf-8"); 
+	echo mb_convert_encoding($重定位动画, 'utf-8', 'gb2312');
 }
 
 
+function over($信息){
+	ob_clean();
+	header("Content-Type: text/xml; charset=utf-8"); 
+	$输出 =  '<?xml version="1.0" encoding="utf-8"?>';
+	$输出 .= '<error>' . htmlspecialchars($信息) . '</error>';
+	$输出 = mb_convert_encoding($输出, 'utf-8', 'gb2312');
+	echo $输出;
+	exit();
+}
 
 ?>

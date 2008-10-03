@@ -2,5 +2,6 @@
 <ytPlayer>
 	<video>
 		<flvURL>%s</flvURL>
+	</video>
 </ytPlayer>
 
