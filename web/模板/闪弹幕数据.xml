@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ytPlayer>
 	<video>
+		<flvID>%d</flvID>
 		<flvURL>%s</flvURL>
 		<playTimes>%d</playTimes>
 		<title>%s</title>

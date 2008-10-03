@@ -33,6 +33,18 @@ function writer_submit(){
 	t.text = "";
 }
 
+function writer_send(con, attr){
+	var url = URL_PREFIX + "savecomment.php?content=" + con + 
+				"&fontsize=" + attr.fontSize + 
+				"&color=" + attr.fontColor + 
+				"&mode=" + attr.flyType +
+				"&playtime=" + (attr.sTime * 1000) + 
+				"&id=" + video_var_flvid;
+	var xml = new XML();
+	xml.load(url);
+}
+
+
 //评论样式窗口显示关闭
 function writer_flytype_window_hide(){
 	_level0.flyTypeWindow._visible = false;

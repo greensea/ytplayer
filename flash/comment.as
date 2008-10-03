@@ -49,77 +49,67 @@ var _fly_var_level_accumulator = 0;
 var _comment_var_display = true;		//是否显示评论
 var _comment_user_total = 0;		//记录用户在本页面发表的评论总数
 
-fly_get_xml();
-
 
 
 //获取字幕源XML
-function fly_get_xml(url){
-	var nsCmt = new XML();
-	nsCmt.ignoreWhitespace = true;
-	tip_add("读取评论…");
-	nsCmt.load("data.xml");
-	
-	nsCmt.onLoad = function(){
-		var cmts = xml_getElementByTagName(this, "comments").childNodes;
-		fly_var_queueLength = 0;
-		fly_var_queue = new Array();
-		for(var i = 0; i < cmts.length; i++){
-			if(cmts[i].nodeName){
-				dgrComments.addItem({
-					片时:_sec2disTime(cmts[i].attributes["playTime"]),
-					内容:cmts[i].lastChild, 
-					评论时间:_timestamp2date(cmts[i].attributes["commentTime"])
-					});
-				//压入弹幕数据库
-				var newCmt:Object = {
-					cmtID:cmts[i].attributes["id"],
-					cmtText:cmts[i].lastChild,
-					sTime:(cmts[i].attributes["playTime"] * 1),	//单位：s，基于影片开始的时间戳
-					fontColor:cmts[i].attributes["fontColor"],
-					fontSize:cmts[i].attributes["fontSize"],
-					flyType:cmts[i].attributes["flyType"],
-					flySpeed:FLY_SPEED_NORMAL //单位：s
-				}
-				//一系列的判断
-				if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
-				if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
-				switch(newCmt.fontSize){
-					case "small":
-						newCmt.fontSize = FLY_FONTSIZE_SMALL;
-						break;
-					case "big":
-						newCmt.fontSize = FLY_FONTSIZE_BIG;
-						break;
-					default:
-						newCmt.fontSize = FLY_FONTSIZE_NORMAL;
-						break;
-				}
-				switch(newCmt.flyType){
-					case "bottom":
-						newCmt.flyType = FLY_TYPE_BOTTOM;
-						break;
-					case "top":
-						newCmt.flyType = FLY_TYPE_TOP;
-						break;
-					default:
-						newCmt.flyType = FLY_TYPE_FLY;
-						break;
-				}
-				fly_var_queue[fly_var_queueLength] = newCmt;
-				fly_var_queueLength++;
+function fly_comment_push(xmlcmt){	
+	var cmts = xml_getElementByTagName(xmlcmt, "comments").childNodes;
+	fly_var_queueLength = 0;
+	fly_var_queue = new Array();
+	for(var i = 0; i < cmts.length; i++){
+		if(cmts[i].nodeName){
+			dgrComments.addItem({
+				片时:_sec2disTime(cmts[i].attributes["playTime"]),
+				内容:cmts[i].lastChild, 
+				评论时间:_timestamp2date(cmts[i].attributes["commentTime"])
+				});
+			//压入弹幕数据库
+			var newCmt:Object = {
+				cmtID:cmts[i].attributes["id"],
+				cmtText:cmts[i].lastChild,
+				sTime:(cmts[i].attributes["playTime"] * 1),	//单位：s，基于影片开始的时间戳
+				fontColor:cmts[i].attributes["fontColor"],
+				fontSize:cmts[i].attributes["fontSize"],
+				flyType:cmts[i].attributes["flyType"],
+				flySpeed:FLY_SPEED_NORMAL //单位：s
 			}
-		}		
-		;
-		fly_comment_new();
-	}
+			//一系列的判断
+			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
+			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
+			switch(newCmt.fontSize){
+				case "small":
+					newCmt.fontSize = FLY_FONTSIZE_SMALL;
+					break;
+				case "big":
+					newCmt.fontSize = FLY_FONTSIZE_BIG;
+					break;
+				default:
+					newCmt.fontSize = FLY_FONTSIZE_NORMAL;
+					break;
+			}
+			switch(newCmt.flyType){
+				case "bottom":
+					newCmt.flyType = FLY_TYPE_BOTTOM;
+					break;
+				case "top":
+					newCmt.flyType = FLY_TYPE_TOP;
+					break;
+				default:
+					newCmt.flyType = FLY_TYPE_FLY;
+					break;
+			}
+			fly_var_queue[fly_var_queueLength] = newCmt;
+			fly_var_queueLength++;
+		}
+	}		
+	fly_comment_new();
 }
 
 
 //字幕队列控制，出队列
 //						（指定显示特定的评论，无论何种情况都强制显示）
 function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
-	//设置函数参数默认值
+	 //设置函数参数默认值
 	if(!enforceFlag) autoNext = false;
 	if(!nextQueueIndex) nextQueueIndex = -1;
 	
@@ -151,7 +141,7 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 			break;
 	}
 			
-trace("color=" + comment.fontColor + ", text=" + comment.cmtText);
+trace("time=" + _video_get_time() + ", color=" + comment.fontColor + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
@@ -164,6 +154,22 @@ trace("color=" + comment.fontColor + ", text=" + comment.cmtText);
 	
 	if(nextQueueIndex == -1) _fly_comment_set_nextnew(comment);		//只有显示非指定评论时才自动显示下一个，否则停止
 }
+
+//设置下一次显示字体的事件（你要说是时间也可以……不过这里写的就是事件没错）
+function _fly_comment_set_nextnew(comment){
+	fly_var_indexNext++;
+	if(fly_var_indexNext < fly_var_queueLength){
+		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - _video_get_time()) * 1000;
+		trace("nextTime=" + fly_var_queue[fly_var_indexNext].sTime + "-" + _video_get_time() + " * 1000");
+		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
+		setTimeout(fly_comment_new, nextTime);
+		trace("set to " + (nextTime / 1000 + _video_get_time()));
+	}
+	else{	//如果已经到末尾的话，就按照FLASH_INTERVAL的频率监控
+		setTimeout(fly_comment_new, FLASH_INTERVAL);
+	}
+}
+
 
 //把字幕放到屏幕上，并将字幕转交动画函数
 //不用进行任何判断，判断都在fly_comment_new()函数中完成，这函数只管put上去并移交给动画控制就行了
@@ -209,18 +215,7 @@ function _fly_comment_putScreen(comment){
 }
 
 
-//设置下一次显示字体的事件（你要说是时间也可以……不过这里写的就是事件没错）
-function _fly_comment_set_nextnew(comment){
-	fly_var_indexNext++;
-	if(fly_var_indexNext < fly_var_queueLength){
-		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - comment.sTime) * 1000;
-		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
-		setTimeout(fly_comment_new, nextTime);
-	}
-	else{	//如果已经到末尾的话，就按照FLASH_INTERVAL的频率监控
-		setTimeout(fly_comment_new, FLASH_INTERVAL);
-	}
-}
+
 	
 //获取字体格式对象，返回 TextFormat
 function _fly_comment_get_style(fColor, fSize){
@@ -654,20 +649,5 @@ function comment_display(btn){
 		btn.label = "显示评论";
 		btn.setStyle("color", 0x006600);
 		btn.setStyle("fontWeight", "bold");
-	}
-}
-
-//囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
-function xml_getElementByTagName(xml, nodeName){
-	for(var i = 0; i < xml.childNodes.length; i++){
-		if(xml.childNodes[i].nodeName == nodeName){
-			return xml.childNodes[i]
-		}
-		else{
-			if(xml.childNodes[i].nodeName){
-				var node = xml_getElementByTagName(xml.childNodes[i], nodeName);
-				if(node.nodeName == nodeName) return node;
-			}
-		}
 	}
 }

@@ -21,3 +21,20 @@ function _leaderZ(num, wid){
 	while(s.length < wid) s = "0" + s;
 	return s;
 }
+
+
+
+//囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
+function xml_getElementByTagName(xml, nodeName){
+	for(var i = 0; i < xml.childNodes.length; i++){
+		if(xml.childNodes[i].nodeName == nodeName){
+			return xml.childNodes[i]
+		}
+		else{
+			if(xml.childNodes[i].nodeName){
+				var node = xml_getElementByTagName(xml.childNodes[i], nodeName);
+				if(node.nodeName == nodeName) return node;
+			}
+		}
+	}
+}

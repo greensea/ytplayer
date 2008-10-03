@@ -6,6 +6,8 @@ init_main();
 
 function init_main(){
 	flyTypeWindow._visible = false;
+	
+	video_button_enable(false);
 }
 
 

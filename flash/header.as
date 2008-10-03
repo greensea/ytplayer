@@ -7,11 +7,14 @@
 import mx.controls.List;
 
 //定义全局常量
-var FLASH_INTERVAL = 30;	//通用刷新时间，毫秒
+var FLASH_INTERVAL:Number = 30;	//通用刷新时间，毫秒
+var URL_PREFIX:String = "http://ytp.bbxy.net/";
 
 //定义全局变量
 var nc:NetConnection;
 var ns:NetStream;
+
+var video_var_requirerelocate = false;
 
 
 //包含文件
