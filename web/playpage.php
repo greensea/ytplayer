@@ -7,7 +7,7 @@ if(is_null($动画)){
 }
 if(intval($动画) / pow(10, strlen($动画)) < 0.1){
 	//不是数字，查询该动画的编号
-	按地址查询动画();
+	按地址查询动画($动画);
 	
 }
 
@@ -32,6 +32,26 @@ echo $动画标题;
 
 
 
+function 按地址查询动画($源页面){
+	global $邀踢动画;
+	global $数据库;
+
+	$语句 = "SELECT 编号 FROM 动画 WHERE 源页面='" . $数据库->查询语句转义($源页面) . "'";
+	$结果 = $数据库->查询($语句);
+
+	if(!$结果){
+		$结果 = $邀踢动画->新建动画数据('', '', $源页面, '');
+		if(!$结果) $邀踢动画->错误('这个影片不能播放');
+	}
+	else{
+		$结果 = $数据库->查询($语句);
+	}
+
+	header('Location: /dh/' . $结果[0]['编号']);
+
+	exit();
+}
+
 
 function 输出页面(){
 	global $动画编号;
@@ -52,8 +72,8 @@ function 输出页面(){
 	$输出 = str_replace('{$弹幕数}', $弹幕数, $输出);
 	$输出 = str_replace('{$来源网站}', $来源网站, $输出);
 	$输出 = str_replace('{$来源页面}', $来源页面, $输出);
-	//ob_clean();
-	header('Content-Type: xml/xhtml; charset=gb2312');
+	ob_clean();
+	//header('Content-Type: xml/xhtml; charset=gb2312');
 	echo $输出;
 }
 
