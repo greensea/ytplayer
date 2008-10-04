@@ -56,6 +56,15 @@ class 邀踢动画类{
 		$数据库->查询($语句);
 		return true;
 	}
+
+	public function 错误($信息){
+		ob_clean();
+		$输出 = file_get_contents('模板/错误.xml');
+		$输出 = str_replace('{$错误信息}', htmlspecialchars($信息), $输出);
+		header('Content-Type: text/xml; charset=utf-8');
+		echo mb_convert_encoding($输出, 'utf-8', 'gb2312');
+		exit();
+	}
 }
 
 ?>

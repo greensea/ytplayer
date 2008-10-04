@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="gb2312"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+		<link rel="stylesheet" type="text/css" href="/css/main.css" />
+		<link rel="stylesheet" type="text/css" href="/css/playpage.css" />
+		<title>{$动画标题}</title>
+	</head>
+
+	<body>
+
+		<div class="YeTou">
+			<div class="tou">
+				<form action="/ss/" method="get" class="SouSuo" onsubmit="window.location='/ss/' + encodeURIComponent(this.GuanJianZi.value);return false;">
+					<div><input type="text" name="GuanJianZi" /></div>
+					<div><input type="submit" value="搜索" /></div>
+				</form>
+			</div>
+			<div class="DaoHang">
+				<a href="/">首页</a>
+				<a href=""></a>
+				<a href=""></a>
+				<a href=""></a>
+				<a href=""></a>
+			</div>
+		</div>
+
+		<div class="BoFang">
+			<div class="XinXi">
+				<div class="BiaoTi">{$动画标题}</div>
+				<div>
+					<span>投稿：{$投递人}</span>
+					<span>投递时间：{$投递时间}</span>
+				</div>
+				<div class="ShuoMing"></div>
+
+				<div>
+					<div>播放数：{$播放数}</div>
+					<div>弹幕：{$弹幕数}</div>
+					<div>来源：<a href="{$来源页面}">{$来源网站}</a></div>
+				</div>
+
+			</div>
+
+		<object type="application/x-shockwave-flash" data="/ytplayer.swf" width="990" height="460">
+				<param name="movie" value="/ytplayer.swf" />
+				<param name="flashvars" value="p={$动画编号}" />
+				<param name="quality" value="autohigh" />
+				<param name="wmode" value="transparent" />
+		</object>
+	</div>
+		
+		<div class="PingLunQu">
+			<div class="PingLun"></div>
+			<div class="PingLun"></div>
+		</div>
+
+		<div class="YeJiao"></div>
+
+	</body>
+</html>
