@@ -24,7 +24,8 @@ if(!$动画编号){	//根据源页面
 		$动画编号 = $动画数组[0]['编号'];
 	}
 }
-else{	 //根据编号
+else{	 
+	//根据编号
 	//if(!$邀踢动画->新建动画数据('', '', $_GET['source'], '')) over('指定的视频不存在');
 	$语句 = "SELECT 编号 FROM 动画 WHERE 编号=$动画编号";
 	$结果 = $数据库->查询($语句);
@@ -37,7 +38,6 @@ $语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 弹幕 WHER
 
 if(!$动画数组) $动画数组 = $数据库->查询($语句一);
 
-echo $语句二;
 $弹幕数组 = $数据库->查询($语句二);
 
 $影片地址 = $动画数组[0]['地址'];
@@ -114,7 +114,8 @@ function 重定位动画(){
 	global $数据库;
 	global $动画编号;
 
-	$新地址 = $邀踢动画->_获取影片地址($动画数组[0]['源页面']);
+	$影片数据 = $邀踢动画->_获取影片信息($动画数组[0]['源页面']);
+	$新地址 = $影片数据['地址'];
 
 	if($新地址){
 		$语句 = "UPDATE 动画 SET 地址='$新地址' WHERE 编号=$动画编号";
@@ -137,7 +138,7 @@ function over($信息){
 	ob_clean();
 	header("Content-Type: text/xml; charset=utf-8"); 
 	$输出 =  '<?xml version="1.0" encoding="utf-8"?>';
-	$输出 .= '<error>' . htmlspecialchars($信息) . '</error>';
+	$输出 .= '<ytp><error>' . htmlspecialchars($信息) . '</error></ytp>';
 	$输出 = mb_convert_encoding($输出, 'utf-8', 'gb2312');
 	echo $输出;
 	exit();
