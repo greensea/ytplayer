@@ -102,6 +102,10 @@ function fly_comment_push(xmlcmt){
 			fly_var_queueLength++;
 		}
 	}		
+	dgrComments.getColumnAt(0).width = 50;
+//	dgrComments.getColumnAt(1).width = 100;
+	dgrComments.getColumnAt(2).width = 150;
+	
 	fly_comment_new();
 }
 

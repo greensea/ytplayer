@@ -1,28 +1,28 @@
-<?xml version="1.0" encoding="gb2312"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<link rel="stylesheet" type="text/css" href="/css/main.css" />
 		<link rel="stylesheet" type="text/css" href="/css/playpage.css" />
 		<title>{$动画标题}</title>
 	</head>
 
 	<body>
+		
+		<h1><a href="/">ytplayer α1</a></h1>
 
 		<div class="YeTou">
 			<div class="tou">
-				<form action="/ss/" method="get" class="SouSuo" onsubmit="window.location='/ss/' + encodeURIComponent(this.GuanJianZi.value);return false;">
-					<div><input type="text" name="GuanJianZi" /></div>
-					<div><input type="submit" value="搜索" /></div>
+				<form action="/playpage.php" method="get" class="SouSuo">
+					<div>
+						输入影片地址或编号<input type="text" name="p" />
+						<input type="submit" value="查找" />
+					</div>
 				</form>
 			</div>
 			<div class="DaoHang">
-				<a href="/">首页</a>
-				<a href=""></a>
-				<a href=""></a>
-				<a href=""></a>
-				<a href=""></a>
+				<a href="/"></a>
 			</div>
 		</div>
 

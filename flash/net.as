@@ -33,7 +33,7 @@ function video_init(){
 		url += "source=" + video_querystring_p;
 	}
 	trace(url);
-	tip_add("加载影片信息：" + url);
+	tip_add("加载影片信息：" );//+ url);
 	
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;
@@ -81,6 +81,9 @@ function video_relocate(){
 	else{
 		url += "source=" + video_querystring_p;
 	}
+	
+	//tip_add(url);	//调试信息
+	
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;
 	xmlvideo.load(url);
@@ -92,8 +95,8 @@ function video_relocate(){
 		}
 		video_var_flvurl = xml_getElementByTagName(this, "flvURL").childNodes[0].nodeValue;
 
-		tip_add("重定位完毕，正在连接...");
-		video_play();
+		tip_add("重定位完毕，正在连接...");// + video_var_flvurl);
+		_root.ns.play(video_var_flvurl);
 	}
 }
 
