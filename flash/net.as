@@ -33,7 +33,7 @@ function video_init(){
 		url += "source=" + video_querystring_p;
 	}
 	trace(url);
-	tip_add("加载影片信息：" );//+ url);
+	tip_add("加载动画信息：" );//+ url);
 	
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;

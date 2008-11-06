@@ -60,13 +60,13 @@ function fly_comment_push(xmlcmt){
 		if(cmts[i].nodeName){
 			dgrComments.addItem({
 				片时:_sec2disTime(cmts[i].attributes["playTime"]),
-				内容:cmts[i].lastChild, 
+				内容:cmts[i].lastChild.nodeValue, 
 				评论时间:_timestamp2date(cmts[i].attributes["commentTime"])
 				});
 			//压入弹幕数据库
 			var newCmt:Object = {
 				cmtID:cmts[i].attributes["id"],
-				cmtText:cmts[i].lastChild,
+				cmtText:cmts[i].lastChild.nodeValue,
 				sTime:(cmts[i].attributes["playTime"] * 1),	//单位：s，基于影片开始的时间戳
 				fontColor:cmts[i].attributes["fontColor"],
 				fontSize:cmts[i].attributes["fontSize"],
@@ -167,7 +167,7 @@ function _fly_comment_set_nextnew(comment){
 		trace("nextTime=" + fly_var_queue[fly_var_indexNext].sTime + "-" + _video_get_time() + " * 1000");
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
-		trace("set to " + (nextTime / 1000 + _video_get_time()));
+		trace(" set to " + (nextTime / 1000 + _video_get_time()) + ", after " + nextTime);
 	}
 	else{	//如果已经到末尾的话，就按照FLASH_INTERVAL的频率监控
 		setTimeout(fly_comment_new, FLASH_INTERVAL);
@@ -634,8 +634,15 @@ function _comment_seek(tTime){
 	for(var i = 0; i < delList.length; i++){
 		_fly_channel_release(delList[i]);
 	}
-
 	
+	//设置下一次显示字幕的调用，如果不是已经没有字幕要显示的话
+	var nextTime = 0;
+	nextTime = fly_var_queue[fly_var_indexNext].sTime - tTime;
+	nextTime *= 1000;
+	trace("[_comment_seek] set next after " + nextTime);
+	if(nextTime > 0){
+		setTimeout(fly_comment_new, nextTime);
+	}
 	//if(needRestart) fly_comment_new();	//如果已经到队尾的话必须重新启动字幕显示进程
 }
 	

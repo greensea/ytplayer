@@ -8,6 +8,8 @@ function init_main(){
 	flyTypeWindow._visible = false;
 	
 	video_button_enable(false);
+	
+	dgrComment.setStyle("fontFamily", "宋体");
 }
 
 

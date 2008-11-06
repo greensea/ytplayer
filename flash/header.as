@@ -8,7 +8,7 @@ import mx.controls.List;
 
 //定义全局常量
 var FLASH_INTERVAL:Number = 30;	//通用刷新时间，毫秒
-var URL_PREFIX:String = "/";
+var URL_PREFIX:String = "http://ytp.bbxy.net/";
 
 //定义全局变量
 var nc:NetConnection;
