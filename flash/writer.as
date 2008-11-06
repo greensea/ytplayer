@@ -17,6 +17,10 @@ function writer_submit(){
 	
 	trace(ns.time);
 	
+	_writer_var_fontcolor = parseInt(btnWriterFontColor.show_txt.text.substr(1, 6), 16);
+	if(isNaN(_writer_var_fontcolor)) _writer_var_fontcolor = FLY_FONTCOLOR_DEFAULT;
+	trace(parseInt(btnWriterFontColor.show_txt.text.substr(1, 6), 16));
+	
 	//添加新的评论到屏幕上
 	var newCmt = Array(t.text, {fontSize:_writer_var_fontsize, 
 								 fontColor:_writer_var_fontcolor,
@@ -98,6 +102,7 @@ function writer_fontsize_set(s){
 	if(!found){
 		_writer_var_fontsize = FLY_FONTSIZE_NORMAL;
 	}
+	if(isNaN(_writer_var_fontsize)) _writer_var_fontsize = FLY_FONTSIZE_DEFAULT;
 	trace("_wirter_fontsize=" + _writer_var_fontsize);
 }
 	

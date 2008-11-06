@@ -77,10 +77,10 @@ function fly_comment_push(xmlcmt){
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
 			switch(newCmt.fontSize){
-				case "small":
+				case "14":
 					newCmt.fontSize = FLY_FONTSIZE_SMALL;
 					break;
-				case "big":
+				case "26":
 					newCmt.fontSize = FLY_FONTSIZE_BIG;
 					break;
 				default:
@@ -145,7 +145,8 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 			break;
 	}
 			
-trace("time=" + _video_get_time() + ", color=" + comment.fontColor + ", text=" + comment.cmtText);
+trace("time=" + _video_get_time() + ", color=" + comment.fontColor + 
+		", size=" + comment.fontSize + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
@@ -197,10 +198,23 @@ function _fly_comment_putScreen(comment){
 	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
-	txt.antiAliasType = "ADVANCED";
-	txt.sharpness = 400;			
-	txt.thickness = 200;
+	/*
+	txt.antiAliasType = "advanced";
+	txt.gridFitType = "pixel";
+	txt.antiAliasType = "advanced";
+	txt.sharpness = 400;
+	txt.thickness = -280;
+	var my_format:TextFormat = new TextFormat();
+	my_format.font = "宋体";
+	txt.setTextFormat(my_format);
+	*/
+	
 
+	if(comment.fontColor == "ffffff" || true){
+		var myFilters = txtFilterSample.filters;
+		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
+		txt.filters = myFilters;
+	}
 
 	//设置样式
 	txt.setTextFormat(_fly_comment_get_style(comment.fontColor, comment.fontSize));

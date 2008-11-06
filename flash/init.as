@@ -10,6 +10,8 @@ function init_main(){
 	video_button_enable(false);
 	
 	dgrComment.setStyle("fontFamily", "宋体");
+	
+	tip_add("加载参数: p=" + _root.p);
 }
 
 
