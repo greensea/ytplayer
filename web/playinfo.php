@@ -105,7 +105,7 @@ $可扩展标记语言 = sprintf($可扩展标记语言模板,
 ob_clean();
 header("Content-Type: text/xml; charset=utf-8"); 
 header("Cache-Control: no-cache, must-revalidate");
-echo mb_convert_encoding($可扩展标记语言, 'utf-8', 'gb2312');
+echo mb_convert_encoding($可扩展标记语言, 'utf-8', 'gbk');
 
 /*********************************************/
 

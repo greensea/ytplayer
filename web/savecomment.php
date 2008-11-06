@@ -4,7 +4,7 @@ require_once("类文件/头.php");
 //获取传回来的数据
 
 $内容 = $_GET['content'];
-$字体 = $_GET['fontsize'];
+$字体 = intval($_GET['fontsize']);
 $颜色 = $_GET['color'];
 $模式 = $_GET['mode'];
 $片时 = $_GET['playtime'];
@@ -15,8 +15,8 @@ $动画编号 = intval($动画编号);
 if($内容 == '') 错误结束('内容为空');
 if($片时 == '') 错误结束('片时为空');
 
-if( $字体 != FLY_FONTSIZE_BIG ||
-	$字体 != FLY_FONTSIZE_NORMAL ||
+if( $字体 != FLY_FONTSIZE_BIG &&
+	$字体 != FLY_FONTSIZE_NORMAL &&
 	$字体 != FLY_FONTSIZE_SMALL		){
 		$字体 = FLY_FONTSIZE_DEFAULT;
 }
@@ -27,7 +27,6 @@ if( $模式 != FLY_MODE_BOTTOM &&
 		$模式 = FLY_MODE_DEFAULT;
 }
 if($颜色 == '') $颜色 = 0xffffff;
-echo $模式;
 
 //判断动画是否存在或允许评论
 $语句 = "SELECT 编号 FROM 动画 WHERE 编号=$动画编号";

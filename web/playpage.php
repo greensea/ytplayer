@@ -86,7 +86,7 @@ function 输出页面(){
 	$输出 = str_replace('{$弹幕数}', $弹幕数, $输出);
 	$输出 = str_replace('{$来源网站}', $来源网站, $输出);
 	$输出 = str_replace('{$来源页面}', $来源页面, $输出);
-	$输出 = mb_convert_encoding($输出, 'utf-8', 'gb2312');
+	$输出 = mb_convert_encoding($输出, 'utf-8', 'gbk');
 	ob_clean();
 	//header('Content-Type: xml/xhtml; charset=gb2312');
 	echo $输出;
