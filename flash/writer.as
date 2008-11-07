@@ -8,6 +8,7 @@ var _writer_var_fontsize = FLY_FONTSIZE_NORMAL;
 var _writer_var_fontcolor = FLY_FONTCOLOR_DEFAULT;
 var _writer_var_commentmode = FLY_TYPE_FLY;
 var _writer_var_issubtitle = false;
+var _writer_submit_timeout_waiter = 0;
 var _writer_xml:XML = new XML();
 
 function writer_submit(){
@@ -40,14 +41,14 @@ function writer_submit(){
 }
 
 function writer_send(con, attr){
-	var url = URL_PREFIX + "savecomment.php?content=" + con + 
+	var url = URL_PREFIX + "savecomment.php?content=" + escape(con) + 
 				"&fontsize=" + attr.fontSize + 
 				"&color=" + attr.fontColor + 
 				"&mode=" + attr.flyType +
 				"&playtime=" + (attr.sTime * 1000) + 
 				"&id=" + video_var_flvid;
 				
-	setTimeout(_writer_submit_timeout, WRITER_SUBMIT_TIMEOUT);
+	_writer_submit_timeout_waiter = setTimeout(_writer_submit_timeout, WRITER_SUBMIT_TIMEOUT);
 	_level0.commentWriter.txtWriterInput.enabled = false;
 	_level0.commentWriter.btnWriterSubmit.enabled = false;
 	_level0.commentWriter.btnWriterSubmit.label = "提交中...";
@@ -56,6 +57,7 @@ function writer_send(con, attr){
 }
 
 _writer_xml.onLoad = function(){
+	clearTimeout(_writer_submit_timeout_waiter);
 	tip_add(this);
 	_level0.commentWriter.txtWriterInput.text = "";
 	_level0.commentWriter.txtWriterInput.enabled = true;
