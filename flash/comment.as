@@ -144,8 +144,16 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 			comment = fly_var_queue[nextQueueIndex];
 			break;
 	}
+	
+	//如果评论是非飘移的字幕，则先不显示。这是因为字幕有可能在显示之前就被放到屏幕上，
+	//对于飘移的字幕来说，即使在被显示之前放到屏幕上，其所在的位置也是不可见的，所以没关系，
+	//但对于不会飘移的字幕来说，其位置是固定的，故不能立即提前把非飘移字幕放上来
+	if((comment.sTime - _video_get_time()) * 1000 > FLASH_INTERVAL){
+		setTimeout(fly_comment_new, FLASH_INTERVAL);
+		return false;
+	}
 			
-trace("time=" + _video_get_time() + ", color=" + comment.fontColor + 
+trace("indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",cmtTime=" + comment.sTime + ", color=" + comment.fontColor + 
 		", size=" + comment.fontSize + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
@@ -291,6 +299,7 @@ function _fly_delete(cmtID:Number, txt:TextField){
 		}
 	}
 	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
+
 	if(leaveTime > 0 && leaveTime <= cmt.flySpeed){
 		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
 		return false;
@@ -567,6 +576,7 @@ function _fly_channel_request(cmt, txt:TextField){
 */
 
 	}
+	trace("分配通道：cl[0]=" + cl[0]);
 	
 	_fly_channel_occupy(chl);
 	

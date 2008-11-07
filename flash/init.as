@@ -11,7 +11,7 @@ function init_main(){
 	
 	dgrComment.setStyle("fontFamily", "宋体");
 	
-	tip_add("加载参数: p=" + _root.p);
+	tip_add("加载参数: b=" + _root.b);
 }
 
 
