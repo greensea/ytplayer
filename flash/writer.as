@@ -50,6 +50,7 @@ function writer_send(con, attr){
 				
 	_writer_submit_timeout_waiter = setTimeout(_writer_submit_timeout, WRITER_SUBMIT_TIMEOUT);
 	_level0.commentWriter.txtWriterInput.enabled = false;
+	_level0.commentWriter.txtWriterInput.editable = false;
 	_level0.commentWriter.btnWriterSubmit.enabled = false;
 	_level0.commentWriter.btnWriterSubmit.label = "提交中...";
 	_writer_xml.load(url);
@@ -61,12 +62,14 @@ _writer_xml.onLoad = function(){
 	tip_add(this);
 	_level0.commentWriter.txtWriterInput.text = "";
 	_level0.commentWriter.txtWriterInput.enabled = true;
+	_level0.commentWriter.txtWriterInput.editable = true;
 	_level0.commentWriter.btnWriterSubmit.enabled = true;
 	_level0.commentWriter.btnWriterSubmit.label = "提交";
 }
 
 function _writer_submit_timeout(){
 	_level0.commentWriter.txtWriterInput.enabled = true;
+	_level0.commentWriter.txtWriterInput.editable = true;
 	_level0.commentWriter.btnWriterSubmit.enabled = true;
 	_level0.commentWriter.btnWriterSubmit.label = "失败";
 }

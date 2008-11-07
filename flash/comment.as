@@ -102,6 +102,7 @@ function fly_comment_push(xmlcmt){
 			fly_var_queueLength++;
 		}
 	}		
+	dgrComments.sortItemsBy("评论时间", "DESC");
 	dgrComments.getColumnAt(0).width = 50;
 //	dgrComments.getColumnAt(1).width = 100;
 	dgrComments.getColumnAt(2).width = 150;
@@ -153,8 +154,8 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 		return false;
 	}
 			
-trace("indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",cmtTime=" + comment.sTime + ", color=" + comment.fontColor + 
-		", size=" + comment.fontSize + ", text=" + comment.cmtText);
+trace(getTimer() + " indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",cmtTime=" + comment.sTime + ", color=" + comment.fontColor + 
+		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
@@ -173,10 +174,9 @@ function _fly_comment_set_nextnew(comment){
 	fly_var_indexNext++;
 	if(fly_var_indexNext < fly_var_queueLength){
 		var nextTime = (fly_var_queue[fly_var_indexNext].sTime - _video_get_time()) * 1000;
-		trace("nextTime=" + fly_var_queue[fly_var_indexNext].sTime + "-" + _video_get_time() + " * 1000");
 		if(nextTime <= 0) nextTime = 1;		//如果已经超过了下一个字幕显示的时间延迟1ms后立刻显示下一字幕
 		setTimeout(fly_comment_new, nextTime);
-		trace(" set to " + (nextTime / 1000 + _video_get_time()) + ", after " + nextTime);
+		//trace(getTimer() + " set [fly_comment_new] to " + (nextTime / 1000 + _video_get_time()) + ", after " + nextTime);
 	}
 	else{	//如果已经到末尾的话，就按照FLASH_INTERVAL的频率监控
 		setTimeout(fly_comment_new, FLASH_INTERVAL);
@@ -203,7 +203,7 @@ function _fly_comment_putScreen(comment){
 	}
 	
 	//创建文本实例
-	var txt:TextField = _level0.createTextField(null, comment.cmtID, FLY_STARTING_X, 1, 1, 1);
+	var txt:TextField = _level0.createTextField(null, lvl, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	/*
@@ -304,7 +304,7 @@ function _fly_delete(cmtID:Number, txt:TextField){
 		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
 		return false;
 	}
-	
+	trace(getTimer() + " (delete) cmtID=" + cmtID + ", txt=" + txt.text);
 	//释放通道
 	_fly_channel_release(cmtID);
 	//删除文本实例
@@ -343,6 +343,8 @@ function _fly_channel_release(cmtID){
 
 //内部 核心 通道请求
 function _fly_channel_request(cmt, txt:TextField){
+	var debugstr:String;
+	
 	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
 	/*数据结构定义*/
 	var lastCheckShareChannel = 0;
@@ -369,7 +371,6 @@ function _fly_channel_request(cmt, txt:TextField){
 			else{
 				chl[0] = fly_subtitle_redline - chl[1].channelBreadth;
 			}
-
 			
 			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
 			var fFlag = false;
@@ -441,8 +442,9 @@ function _fly_channel_request(cmt, txt:TextField){
 			//先设置查找初始数组索引，直到找到通道0为止
 			var stIndex = 0;
 			if(_fly_var_channels.length != 0){
+				//查找到非负通道，也就是非底部评论的通道
 				while(!fFlag && stIndex <= _fly_var_channels.length){
-					if(_fly_var_channels[stIndex] >= 0){
+					if(_fly_var_channels[stIndex][0] >= 0){
 						fFlag = true;
 					}
 					else{
@@ -470,6 +472,7 @@ function _fly_channel_request(cmt, txt:TextField){
 						//还要判断我们的通道尾有没有超过下一个通道的头
 						if(stIndex + 1 == _fly_var_channels.length){	//后面已经没有通道了，可以分配
 							fFlag = true;
+							
 						}
 						else if(_fly_var_channels[stIndex + 1][0] >= chl[0] + chl[1].channelBreadth){	//否则还要判断一下
 							fFlag = true;
@@ -550,9 +553,11 @@ function _fly_channel_request(cmt, txt:TextField){
 				}
 			}
 			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
-			if(chl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
+			debugstr += ", chl[0]=" + chl[0] + ", breadth=" + chl[1].channelBreadth;
+			/*if(chl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
 				chl[0] = chl[0] % FLY_SUBTITLE_RANGE + Math.round(chl[0] % FLY_SUBTITLE_RANGE);
-			}
+			}*/
+			
 			
 			//！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
 			//弱弱地尝试一下仅允许偶数通道，懒得去查找是哪里造成了本来可以使用同一通道的两个字幕使用了相差为1的两个通道
@@ -565,6 +570,12 @@ function _fly_channel_request(cmt, txt:TextField){
 			//查找终于完毕了
 			cl[0] = chl[0];
 			
+			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
+			if(cl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
+				debugstr += ", modnum=" + Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);// - fly_subtitle_redline - chl[1].channelBreadth);
+				cl[0] = cl[0] % Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);
+			}
+			
 			cl[1] = 0;		//废弃行，本来是用于层编号的
 			
 			break;
@@ -576,7 +587,9 @@ function _fly_channel_request(cmt, txt:TextField){
 */
 
 	}
-	trace("分配通道：cl[0]=" + cl[0]);
+	debugstr += ", cl[0]=" + cl[0];
+	debugstr += ", chl[0]=" + chl[0];
+	trace("分配通道：" + debugstr);
 	
 	_fly_channel_occupy(chl);
 	
@@ -617,7 +630,7 @@ function comment_add_comment(con, attr){
 	trace("==================================");
 */
 	//添加到右部评论
-	dgrComments.addItem({
+	dgrComments.addItemAt(0, {
 		片时:_sec2disTime(attr.sTime),
 		内容:con, 
 		评论时间:_date2date(new Date())

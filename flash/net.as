@@ -70,7 +70,7 @@ function video_relocate(){
 		return false;	//如果已经开始播放了，那就不用重定位了
 	}
 	else{
-		tip_add("超时，正在重定位动画...");
+		tip_add("正在重定位动画...");
 	}
 	video_var_relocated = true;		//仅允许一次重定位
 	
