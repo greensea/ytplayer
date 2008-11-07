@@ -22,6 +22,17 @@ function _leaderZ(num, wid){
 	return s;
 }
 
+//Cookies 读写函数
+function set_cookie(key, val){
+	var so:SharedObject = SharedObject.getLocal("ytplayer");
+	if(!so) return null;
+	so.data[key] = val;
+	return true;
+}
+function get_cookie(key){
+	var so:SharedObject = SharedObject.getLocal("ytplayer");
+	return so ? so.data[key] : null;
+}
 
 
 //囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
@@ -38,3 +49,4 @@ function xml_getElementByTagName(xml, nodeName){
 		}
 	}
 }
+

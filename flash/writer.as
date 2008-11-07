@@ -2,11 +2,13 @@
 /*******	writer.as		***********/
 /*****	用以控制评论提交和输入	******/
 /**************************************/
+var WRITER_SUBMIT_TIMEOUT = 5000;	//提交弹幕超时时间
 
 var _writer_var_fontsize = FLY_FONTSIZE_NORMAL;
 var _writer_var_fontcolor = FLY_FONTCOLOR_DEFAULT;
 var _writer_var_commentmode = FLY_TYPE_FLY;
 var _writer_var_issubtitle = false;
+var _writer_xml:XML = new XML();
 
 function writer_submit(){
 	var t = _level0.commentWriter.txtWriterInput;
@@ -35,7 +37,6 @@ function writer_submit(){
 	
 	//提交评论到服务器
 	writer_send(newCmt[0], newCmt[1]);
-	t.text = "";
 }
 
 function writer_send(con, attr){
@@ -45,11 +46,28 @@ function writer_send(con, attr){
 				"&mode=" + attr.flyType +
 				"&playtime=" + (attr.sTime * 1000) + 
 				"&id=" + video_var_flvid;
-	var xml = new XML();
-	xml.load(url);
+				
+	setTimeout(_writer_submit_timeout, WRITER_SUBMIT_TIMEOUT);
+	_level0.commentWriter.txtWriterInput.enabled = false;
+	_level0.commentWriter.btnWriterSubmit.enabled = false;
+	_level0.commentWriter.btnWriterSubmit.label = "提交中...";
+	_writer_xml.load(url);
 	trace(url);
 }
 
+_writer_xml.onLoad = function(){
+	tip_add(this);
+	_level0.commentWriter.txtWriterInput.text = "";
+	_level0.commentWriter.txtWriterInput.enabled = true;
+	_level0.commentWriter.btnWriterSubmit.enabled = true;
+	_level0.commentWriter.btnWriterSubmit.label = "提交";
+}
+
+function _writer_submit_timeout(){
+	_level0.commentWriter.txtWriterInput.enabled = true;
+	_level0.commentWriter.btnWriterSubmit.enabled = true;
+	_level0.commentWriter.btnWriterSubmit.label = "失败";
+}
 
 //评论样式窗口显示关闭
 function writer_flytype_window_hide(){

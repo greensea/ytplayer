@@ -18,7 +18,7 @@ var video_var_requirerelocate = false;
 
 
 //包含文件
-#include "init.as"
+#include "_init.as"
 #include "_functions.as"
 #include "comment.as"
 #include "commentgrid.as"
