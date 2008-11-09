@@ -346,7 +346,7 @@ function _fly_channel_request(cmt, txt:TextField){
 	var debugstr:String;
 	
 	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
-	/*数据结构定义*/
+	/*数据结构定义 _fly_var_channels */
 	var lastCheckShareChannel = 0;
 	var chl = new Array(0, 
 							{
@@ -497,18 +497,25 @@ function _fly_channel_request(cmt, txt:TextField){
 					**************/
 						var ourTime:Number;	//我们字幕的头碰到左边（或碰到现有字幕右边）（或……）的时间
 						var hisTime:Number;	//他们字幕的尾碰到左边（或他们字幕消失）（或……）的时间
+						var hisAllShowedTime:Number;	//前字幕尾已经出现（即前字幕已经完全显示出来）的时间
 						var prevCmt = _fly_var_channels[stIndex];
 						switch(cmt.flyType){
 							case FLY_TYPE_FLY:
 								if(prevCmt[1].flyType == FLY_TYPE_FLY){	//第1种情况
+									//trace("情况1 stIndex=" + stIndex);
 									hisTime = prevCmt[1].deathTime;
 									ourTime = cmt.flySpeed * (FLY_STARTING_X / (txt.textWidth + FLY_STARTING_X)) + cmt.sTime;
+									hisAllShowedTime = prevCmt[1].textWidth / (FLY_STARTING_X + prevCmt[1].textWidth) * prevCmt[1].flySpeed + prevCmt[1].sTime;
 									//这里注意，这里偷懒了点。如果前字幕是一个比屏幕还长的字幕的话，可能这时候这个字幕还没有完全显示出来，
 									//这个时候如果共享通道的话，就会发生冲突
 									//现在仅仅判断前字幕是否过长，其实可以判断前字幕是否已经完全显示出来，偷懒了 = =  
-									if(ourTime >= hisTime && prevCmt[1].textWidth < FLY_STARTING_X){
+									// 本字幕头后于前字幕尾到达左边  且  前字幕长度小于屏幕长度  且  前字幕尾已出现（前字幕尾先于本字幕头出现）
+									if(ourTime >= hisTime && prevCmt[1].textWidth < FLY_STARTING_X && hisAllShowedTime < cmt.sTime){
 										fFlag = true;
 										//chl[0] += 1;
+										trace("情况1 前字幕非过长 stIndex=" + stIndex + ", fFlag=" + fFlag + ",下注vvv");
+										trace(ourTime + " >=" + hisTime + " && " + prevCmt[1].textWidth + " < " + FLY_STARTING_X
+															+ " && " + hisAllShowedTime + " < " + cmt.sTime);
 									}
 									else{
 										lastCheckShareChannel = prevCmt[0];		//这里是防止如果该通道已经共享的话，重复地与此通道中的两个字幕对比
@@ -676,6 +683,7 @@ function _comment_seek(tTime){
 	var nextTime = 0;
 	nextTime = fly_var_queue[fly_var_indexNext].sTime - tTime;
 	nextTime *= 1000;
+	if(nextTime <= 0) nextTime = FLY_FLASH_INTERVAL;
 	trace("[_comment_seek] set next after " + nextTime);
 	if(nextTime > 0){
 		setTimeout(fly_comment_new, nextTime);

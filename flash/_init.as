@@ -1,6 +1,15 @@
 ﻿/***********YTdonghuaPlayer************/
 /*******	init.as			***********/
 /**************************************/
+var ctxMenu:ContextMenu = new ContextMenu();
+ctxMenu.hideBuiltInItems();
+ctxMenu.customItems.push(new ContextMenuItem("取消平滑", video_smooth));
+ctxMenu.customItems.push(new ContextMenuItem("关于 ytplayer..↗", menu_about));
+ytVideo.menu = ctxMenu;
+
+_level0.playerControl.plyCtlBar.enabled = false;	//先设置控制条不可用
+
+
 flyTypeWindow._visible = false;
 	
 video_button_enable(false);

@@ -34,6 +34,9 @@ function get_cookie(key){
 	return so ? so.data[key] : null;
 }
 
+function menu_about(){
+	getURL("javascript:window.open('/about.html')");
+}
 
 //囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）
 function xml_getElementByTagName(xml, nodeName){
