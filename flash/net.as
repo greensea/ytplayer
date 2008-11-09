@@ -41,7 +41,7 @@ function video_init(){
 	xmlvideo.onLoad = function(){
 		//先判断是否错误
 		if(xml_getElementByTagName(this, "ytPlayer") == undefined){
-			tip_add("无法加载影片信息");
+			tip_add("无法加载动画信息");
 			return false;
 		}
 		var e = xml_getElementByTagName(this, "error");

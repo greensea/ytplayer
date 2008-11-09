@@ -203,7 +203,7 @@ function _fly_comment_putScreen(comment){
 	}
 	
 	//创建文本实例
-	var txt:TextField = _level0.createTextField(null, lvl, FLY_STARTING_X, 1, 1, 1);
+	var txt:TextField = _level0.createTextField("popsub_" + comment.cmtID, lvl, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
 	/*
@@ -217,8 +217,8 @@ function _fly_comment_putScreen(comment){
 	txt.setTextFormat(my_format);
 	*/
 	
-
-	if(comment.fontColor == "ffffff" || true){
+	//给文本添加滤镜
+	if(comment.fontColor == "ffffff"){
 		var myFilters = txtFilterSample.filters;
 		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
 		txt.filters = myFilters;
@@ -577,10 +577,11 @@ function _fly_channel_request(cmt, txt:TextField){
 			//查找终于完毕了
 			cl[0] = chl[0];
 			
-			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
+			//超过字幕红线的必须从头取模，然后减去该字幕的带宽，去绝对值。至于为什么请看算法文档
 			if(cl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
 				debugstr += ", modnum=" + Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);// - fly_subtitle_redline - chl[1].channelBreadth);
 				cl[0] = cl[0] % Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);
+				cl[0] = Math.abs(cl[0] - chl[1].channelBreadth);
 			}
 			
 			cl[1] = 0;		//废弃行，本来是用于层编号的
@@ -659,8 +660,9 @@ function _comment_seek(tTime){
 	var needRestart = false;
 	var chl = null;
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
+	//这里应该找到这个时间之前还不应该消失字幕
 	for(var i = 0; i < fly_var_queue.length; i++){
-		if(tTime <= fly_var_queue[i].sTime){
+		if(tTime <= (fly_var_queue[i].sTime + fly_var_queue[i].flySpeed)){
 			if(fly_var_indexNext >= fly_var_queueLength) needRestart = true;
 			fly_var_indexNext = i;
 			i = fly_var_queue.length;
@@ -683,7 +685,7 @@ function _comment_seek(tTime){
 	var nextTime = 0;
 	nextTime = fly_var_queue[fly_var_indexNext].sTime - tTime;
 	nextTime *= 1000;
-	if(nextTime <= 0) nextTime = FLY_FLASH_INTERVAL;
+	if(nextTime <= 0) nextTime = 1;
 	trace("[_comment_seek] set next after " + nextTime);
 	if(nextTime > 0){
 		setTimeout(fly_comment_new, nextTime);

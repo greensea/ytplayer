@@ -2,7 +2,7 @@
 /*******	writer.as		***********/
 /*****	用以控制评论提交和输入	******/
 /**************************************/
-var WRITER_SUBMIT_TIMEOUT = 5000;	//提交弹幕超时时间
+var WRITER_SUBMIT_TIMEOUT = 10000;	//提交弹幕超时时间
 
 var _writer_var_fontsize = FLY_FONTSIZE_NORMAL;
 var _writer_var_fontcolor = FLY_FONTCOLOR_DEFAULT;
