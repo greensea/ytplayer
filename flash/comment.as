@@ -251,7 +251,6 @@ function _fly_comment_get_style(fColor, fSize){
 	s.color = int("0x" + fColor);
 	return s;
 }
-	
 
 //评论显示开始
 function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number, cmtID:Number){
@@ -376,47 +375,61 @@ function _fly_channel_request(cmt, txt:TextField){
 			var fFlag = false;
 			var stIndex = _fly_var_channels.length - 1;
 			
-			
-			//查找到已有的通道头小于我们的初始通道尾的通道
-			while(stIndex > 0 && !fFlag){
-				if(_fly_var_channels[stIndex][0] <= chl[0] + chl[1].channelBreadth){
+			//如果当前没有通道则可以直接使用此通道
+			if(_fly_var_channels.length == 0){
+				fFlag = true;
+			}
+			else{	//否则就判断一下使用现在这个通道是否会造成冲突
+					//逻辑：已分配的最后一个通道的尾小于本通道头则不冲突
+				trace(_fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
+				if(_fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth < chl[0]){
 					fFlag = true;
+				}
+			}
+				
+			
+			//查找到已有的通道头大于我们的初始通道尾的通道
+			while(stIndex >= 0 && !fFlag){
+				if(_fly_var_channels[stIndex][0] > chl[0] + chl[1].channelBreadth){
+					fFlag = true;
+					trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) +
+							", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
 				}
 				else{
 					stIndex--;
 				}
 			}
+			
 			//如果找不到通道尾小于我们初始通道的通道的话，则可以直接使用现在的通道
 			if(stIndex == 0){
 				fFlag = true;
 			}
-			else{	//否则当然还要继续查找
+			else if(!fFlag){	//否则当然还要继续查找
 				fFlag = false;
 			}
 
-
+			trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
 				while(!fFlag && stIndex >= 0){
 					//如果我们的头通道小于等于他的尾通道，则会发生冲突
 					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
 					if(chl[0] <= itTail){
-						//不冲突的话就可以把我们的分配到他头上去
 						chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
 						stIndex--;
 					}
 					else{
+						//不冲突的话就可以把我们的分配到他头上去
 						fFlag = true;
 					}
 				}
-				
-				//如果已经找到通道头还没有找到可用通道，则直接分配到上一个通道的头通道去
+				//如果已经找到通道头还没有找到可用通道，（若有上一个通道）则直接分配到上一个通道的头通道去
 				if(stIndex < 0){
+					trace("无可用通道,stIndex=" + stIndex);
 					chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
 					fFlag = true;
 				}
 			}
-
 			//对负数的通道取模
 			
 			if(chl[0] <= 0){

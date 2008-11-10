@@ -23,7 +23,7 @@ function video_init(){
 	else{
 		video_querystring_p = parseInt(_root.b);
 	}
-	if(!_root.b) video_querystring_p = 1;
+	if(!_root.b) video_querystring_p = 38;
 	
 	var url = URL_PREFIX + "playinfo.php?relocate=0&";
 	if(typeof(video_querystring_p) == "number"){
