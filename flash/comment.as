@@ -363,6 +363,7 @@ function _fly_channel_request(cmt, txt:TextField){
 	//分配通道
 	switch(cmt.flyType){
 		case FLY_TYPE_BOTTOM:
+			var minBottomPopsubChl = 0;
 			//设置查找初始位置
 			if(chl[1].isSubtitle){
 				chl[0] = ytVideo._height - chl[1].channelBreadth;
@@ -370,18 +371,26 @@ function _fly_channel_request(cmt, txt:TextField){
 			else{
 				chl[0] = fly_subtitle_redline - chl[1].channelBreadth;
 			}
+			minBottomPopsubChl = chl[0];
 			
 			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
 			var fFlag = false;
 			var stIndex = _fly_var_channels.length - 1;
 			
-			//如果当前没有通道则可以直接使用此通道
-			if(_fly_var_channels.length == 0){
-				fFlag = true;
+			//如果当前没有通道则可以直接使用此通道，若有则可直接分配
+			fFlag = true;
+			for(var i = 0; i < _fly_var_channels.length; i++){
+				if(_fly_var_channels[i][1].flyType == FLY_TYPE_BOTTOM){
+					fFlag = false;
+					minBottomPopsubChl = _fly_var_channels[i][0];
+					i = 99999;
+				}
 			}
-			else{	//否则就判断一下使用现在这个通道是否会造成冲突
+			
+			//如果当前已经分配有底部通道，进行判断
+			if(!fFlag){	//判断一下使用现在这个通道是否会造成冲突
 					//逻辑：已分配的最后一个通道的尾小于本通道头则不冲突
-				trace(_fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
+				//trace(_fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
 				if(_fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth < chl[0]){
 					fFlag = true;
 				}
@@ -425,8 +434,9 @@ function _fly_channel_request(cmt, txt:TextField){
 				}
 				//如果已经找到通道头还没有找到可用通道，（若有上一个通道）则直接分配到上一个通道的头通道去
 				if(stIndex < 0){
-					trace("无可用通道,stIndex=" + stIndex);
-					chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
+					trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
+					//chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
+					chl[0] = minBottomPopsubChl - chl[1].channelBreadth - 1;
 					fFlag = true;
 				}
 			}
