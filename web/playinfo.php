@@ -127,7 +127,7 @@ function 重定位动画(){
 	}
 
 	$重定位动画模板 = file_get_contents('模板/重定位动画.xml');
-	$重定位动画 = sprintf($重定位动画模板, $新地址);
+	$重定位动画 = sprintf($重定位动画模板, htmlspecialchars($新地址));
 	
 	ob_clean();
 	header("Content-Type: text/xml; charset=utf-8"); 
