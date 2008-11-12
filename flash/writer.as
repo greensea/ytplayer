@@ -17,6 +17,7 @@ function writer_submit(){
 	
 	var playTime = _video_get_time() - 0.1;	//把评论时间提前0.1s
 	if(playTime <= 0) playTime = 0.1;			//另外0.1s之前不允许评论
+	if(playTime > video_var_timeTotal) playTime = _video_var_timeTotal;
 	
 	trace(ns.time);
 	

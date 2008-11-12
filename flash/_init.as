@@ -17,6 +17,8 @@ video_button_enable(false);
 dgrComment.setStyle("fontFamily", "宋体");
 	
 tip_add("加载参数: b=" + _root.b);
+
+_root.sts._visible = false;
 	
 //设置音量
 function init_set_volume(){

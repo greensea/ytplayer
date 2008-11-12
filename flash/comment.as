@@ -134,8 +134,6 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 		return false;
 	}
 	
-	//----下面才是正式的开始
-
 	var comment;
 	switch(nextQueueIndex){
 		case -1:	//如果没有指定需要显示的字幕，则显示fly_var_indexNext指定的字幕
@@ -146,6 +144,7 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 			break;
 	}
 	
+	
 	//如果评论是非飘移的字幕，则先不显示。这是因为字幕有可能在显示之前就被放到屏幕上，
 	//对于飘移的字幕来说，即使在被显示之前放到屏幕上，其所在的位置也是不可见的，所以没关系，
 	//但对于不会飘移的字幕来说，其位置是固定的，故不能立即提前把非飘移字幕放上来
@@ -154,7 +153,7 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 		return false;
 	}
 			
-trace(getTimer() + " indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",cmtTime=" + comment.sTime + ", color=" + comment.fontColor + 
+trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
 		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
@@ -218,7 +217,7 @@ function _fly_comment_putScreen(comment){
 	*/
 	
 	//给文本添加滤镜
-	if(comment.fontColor == "ffffff"){
+	if(true || comment.fontColor == "ffffff"){
 		var myFilters = txtFilterSample.filters;
 		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
 		txt.filters = myFilters;
@@ -401,8 +400,7 @@ function _fly_channel_request(cmt, txt:TextField){
 			while(stIndex >= 0 && !fFlag){
 				if(_fly_var_channels[stIndex][0] > chl[0] + chl[1].channelBreadth){
 					fFlag = true;
-					trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) +
-							", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
+					//trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) + ", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
 				}
 				else{
 					stIndex--;
@@ -417,7 +415,7 @@ function _fly_channel_request(cmt, txt:TextField){
 				fFlag = false;
 			}
 
-			trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
+			//trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
 				while(!fFlag && stIndex >= 0){
@@ -434,7 +432,7 @@ function _fly_channel_request(cmt, txt:TextField){
 				}
 				//如果已经找到通道头还没有找到可用通道，（若有上一个通道）则直接分配到上一个通道的头通道去
 				if(stIndex < 0){
-					trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
+					//trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
 					//chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
 					chl[0] = minBottomPopsubChl - chl[1].channelBreadth - 1;
 					fFlag = true;
@@ -618,9 +616,11 @@ function _fly_channel_request(cmt, txt:TextField){
 */
 
 	}
+	
+	
 	debugstr += ", cl[0]=" + cl[0];
 	debugstr += ", chl[0]=" + chl[0];
-	trace("分配通道：" + debugstr);
+	//trace("分配通道：" + debugstr);
 	
 	_fly_channel_occupy(chl);
 	
@@ -682,9 +682,11 @@ function comment_add_comment(con, attr){
 function _comment_seek(tTime){
 	var needRestart = false;
 	var chl = null;
+	if(tTime == -1) tTime = ns.time;
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
 	//这里应该找到这个时间之前还不应该消失字幕
 	for(var i = 0; i < fly_var_queue.length; i++){
+		trace("_comment_seek查找判断：i=" + i + ", tTime=" + tTime + ", sTime=" + fly_var_queue[i].sTime + ", flySpeed=" + fly_var_queue[i].flySpeed);
 		if(tTime <= (fly_var_queue[i].sTime + fly_var_queue[i].flySpeed)){
 			if(fly_var_indexNext >= fly_var_queueLength) needRestart = true;
 			fly_var_indexNext = i;
@@ -703,13 +705,15 @@ function _comment_seek(tTime){
 	for(var i = 0; i < delList.length; i++){
 		_fly_channel_release(delList[i]);
 	}
+	//注：未完成：这里应该同时删除占用了被释放通道的字幕
+	//………………
 	
 	//设置下一次显示字幕的调用，如果不是已经没有字幕要显示的话
 	var nextTime = 0;
 	nextTime = fly_var_queue[fly_var_indexNext].sTime - tTime;
 	nextTime *= 1000;
 	if(nextTime <= 0) nextTime = 1;
-	trace("[_comment_seek] set next after " + nextTime);
+	trace("[_comment_seek] set next after " + nextTime + ", fly_var_indexNext=" + fly_var_indexNext + ", ns.time=" + ns.time + ", _video_get_time()=" + _video_get_time() + ", tTime=" + tTime);
 	if(nextTime > 0){
 		setTimeout(fly_comment_new, nextTime);
 	}

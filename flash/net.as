@@ -57,7 +57,7 @@ function video_init(){
 		//压入评论表（该函数同时会启动字幕飘移事件）
 		fly_comment_push(this);
 		
-		tip_add("影片信息加载成功");
+		tip_add("动画信息加载成功");
 		//启动播放
 		main();
 		video_var_relocate_waiter = setTimeout(video_relocate, VIDEO_RELOCATE_WAITTIME * 1000);
