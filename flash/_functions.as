@@ -2,8 +2,10 @@
 /*******	_functions.as	***********/
 /**************************************/
 
-function _timestamp2date(ts){
-	var t:Date = new Date(ts * 1000);
+function _timestamp2date(ts:Number){
+	//似乎Flash的时间戳换算有问题？会比实际日期少1个月？这里就手动加上1个月的时间
+	ts = int(ts);
+	var t:Date = new Date((ts + 86400 * 30) * 1000 );
 	return _leaderZ(t.getMonth(), 2) + "月" + _leaderZ(t.getDate(), 2) + "日 "
 			+ _leaderZ(t.getHours(), 2) + ":" + _leaderZ(t.getMinutes(), 2) + ":" + _leaderZ(t.getSeconds(), 2);
 }
@@ -35,7 +37,7 @@ function get_cookie(key){
 }
 
 function menu_about(){
-	getURL("javascript:window.open('/about.html')");
+	getURL("/guanyu.html", "_blank");
 }
 
 //囧的XML的getElementByTagName函数 递归查找（注意是Element而不是Elements哦）

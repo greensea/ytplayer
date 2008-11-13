@@ -222,6 +222,8 @@ function _fly_comment_putScreen(comment){
 		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
 		txt.filters = myFilters;
 	}
+	txt._alpha = 75;
+	//txt.alpha = 0.5;
 
 	//设置样式
 	txt.setTextFormat(_fly_comment_get_style(comment.fontColor, comment.fontSize));
