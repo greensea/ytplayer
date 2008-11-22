@@ -17,7 +17,8 @@ function writer_submit(){
 	
 	var playTime = _video_get_time() - 0.1;	//把评论时间提前0.1s
 	if(playTime <= 0) playTime = 0.1;			//另外0.1s之前不允许评论
-	if(playTime > video_var_timeTotal) playTime = _video_var_timeTotal;
+	if(playTime > video_var_timeTotal || playTime == undefined) playTime = video_var_timeTotal;
+	trace("弹幕时间追踪【0】：" + playTime + ", (playTime == undefined)=" + (playTime == undefined));
 	
 	trace(ns.time);
 	
@@ -48,7 +49,7 @@ function writer_send(con, attr){
 				"&mode=" + attr.flyType +
 				"&playtime=" + (attr.sTime * 1000) + 
 				"&id=" + video_var_flvid;
-				
+				trace("弹幕显示时间追踪：" + attr.sTime);
 	_writer_submit_timeout_waiter = setTimeout(_writer_submit_timeout, WRITER_SUBMIT_TIMEOUT);
 	_level0.commentWriter.txtWriterInput.enabled = false;
 	_level0.commentWriter.txtWriterInput.editable = false;
