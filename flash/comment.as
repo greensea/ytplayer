@@ -114,6 +114,9 @@ function fly_comment_push(xmlcmt){
 //字幕队列控制，出队列
 //						（指定显示特定的评论，无论何种情况都强制显示）
 function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
+	//不显示弹幕则不用执行此函数
+	if(!_comment_var_display) return false;
+	
 	 //设置函数参数默认值
 	if(!enforceFlag) autoNext = false;
 	if(!nextQueueIndex) nextQueueIndex = -1;
@@ -154,7 +157,7 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 	}
 			
 trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
-		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText);
+		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText + ", _fly_var_channels.length=" + _fly_var_channels.length);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
@@ -162,7 +165,7 @@ trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _vid
 			return false;
 		}
 	}	
-	
+	trace("追踪调试：cmtID=" + comment.cmtID + ", text=" + comment.cmtText);
 	_fly_comment_putScreen(comment);
 	
 	if(nextQueueIndex == -1) _fly_comment_set_nextnew(comment);		//只有显示非指定评论时才自动显示下一个，否则停止
@@ -205,16 +208,6 @@ function _fly_comment_putScreen(comment){
 	var txt:TextField = _level0.createTextField("popsub_" + comment.cmtID, lvl, FLY_STARTING_X, 1, 1, 1);
 	txt.autoSize = true;
 	txt.text = comment.cmtText;
-	/*
-	txt.antiAliasType = "advanced";
-	txt.gridFitType = "pixel";
-	txt.antiAliasType = "advanced";
-	txt.sharpness = 400;
-	txt.thickness = -280;
-	var my_format:TextFormat = new TextFormat();
-	my_format.font = "宋体";
-	txt.setTextFormat(my_format);
-	*/
 	
 	//给文本添加滤镜
 	if(true || comment.fontColor == "ffffff"){
@@ -222,8 +215,6 @@ function _fly_comment_putScreen(comment){
 		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
 		txt.filters = myFilters;
 	}
-	//txt._alpha = 75;
-	//txt.alpha = 0.5;
 
 	//设置样式
 	txt.setTextFormat(_fly_comment_get_style(comment.fontColor, comment.fontSize));
@@ -260,6 +251,7 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 	}
 	else{		//定点显示的字幕
 		txt._visible = true;
+		//trace("[fly_show] text=" + txt.text + ", speed=" + speed + ", _visible=" + txt._visible + ", txt._x=" + txt._x + ", txt._y=" + txt._y);
 		setTimeout(_fly_delete, speed * 1000, cmtID, txt);
 	}
 }
@@ -292,6 +284,7 @@ var debug:String;
 function _fly_delete(cmtID:Number, txt:TextField){
 	var cmt = null;
 	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
+	//但如果是不显示弹幕的话则不管三七二十一一律删除
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i][1].cmtID == cmtID){
 			cmt = _fly_var_channels[i][1];
@@ -300,15 +293,19 @@ function _fly_delete(cmtID:Number, txt:TextField){
 	}
 	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
 
-	if(leaveTime > 0 && leaveTime <= cmt.flySpeed){
+	if(leaveTime > 0 && leaveTime <= cmt.flySpeed && _comment_var_display){
+		//——【不删除】
 		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
 		return false;
 	}
-	trace(getTimer() + " (delete) cmtID=" + cmtID + ", txt=" + txt.text);
-	//释放通道
-	_fly_channel_release(cmtID);
-	//删除文本实例
-	txt.removeTextField();
+	else{
+		//——【删除】
+		trace(getTimer() + " (delete) cmtID=" + cmtID + ", txt=" + txt.text);
+		//释放通道
+		_fly_channel_release(cmtID);
+		//删除文本实例
+		txt.removeTextField();
+	}
 }
 
 //内部 通道占用
@@ -652,16 +649,7 @@ function comment_add_comment(con, attr){
 		flyType:attr.flyType,
 		flySpeed:FLY_SPEED_NORMAL //单位：s
 	}
-/*	trace("=======Add New Comment=============");
-	trace(id);
-	trace(con);
-	trace(attr.sTime*1);
-	trace("fontColor=" + attr.fontColor);
-	trace("fontSize=" + attr.fontSize);
-	trace(attr.flyType);
-	trace(newCmt.flySpeed);
-	trace("==================================");
-*/
+
 	//添加到右部评论
 	dgrComments.addItemAt(0, {
 		片时:_sec2disTime(attr.sTime),
@@ -704,12 +692,11 @@ function _comment_seek(tTime){
 			delList.push(chl[1].cmtID);
 		}
 	}
+	//删除已经释放了通道的TextField对象
 	for(var i = 0; i < delList.length; i++){
 		_fly_channel_release(delList[i]);
 		eval("popsub_" + delList[i]).removeTextField();
 	}
-	//注：未完成：这里应该同时删除占用了被释放通道的字幕
-	//………………
 	
 	//设置下一次显示字幕的调用，如果不是已经没有字幕要显示的话
 	var nextTime = 0;
@@ -729,13 +716,27 @@ function _comment_seek(tTime){
 function comment_display(btn){
 	_comment_var_display = !_comment_var_display;
 	if(_comment_var_display){
+		_comment_show();
 		btn.label = "隐藏评论";
 		btn.setStyle("color", 0x000000);
 		btn.setStyle("fontWeight", "");
 	}
 	else{
+		_comment_hide();
 		btn.label = "显示评论";
 		btn.setStyle("color", 0x006600);
 		btn.setStyle("fontWeight", "bold");
+	}
+	
+}
+
+function _comment_show(){
+	_comment_seek(_video_get_time());
+}
+function _comment_hide(){
+	var delID:Number = 0;
+	while(_fly_var_channels.length > 0){
+		delID = _fly_var_channels[0][1].cmtID;
+		_fly_delete(delID, eval("popsub_" + delID));
 	}
 }
