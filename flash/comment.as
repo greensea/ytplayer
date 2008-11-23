@@ -222,7 +222,7 @@ function _fly_comment_putScreen(comment){
 		myFilters[0].color = 0x0; //parseInt(comment.fontColor, 16) ^ 0xffffff;
 		txt.filters = myFilters;
 	}
-	txt._alpha = 75;
+	//txt._alpha = 75;
 	//txt.alpha = 0.5;
 
 	//设置样式
@@ -706,7 +706,6 @@ function _comment_seek(tTime){
 	}
 	for(var i = 0; i < delList.length; i++){
 		_fly_channel_release(delList[i]);
-		trace("[_comment_seek] 删除TextField实例 cmtID=" + delList[i] + " TextField=" + eval("popsub_" + delList[i]));
 		eval("popsub_" + delList[i]).removeTextField();
 	}
 	//注：未完成：这里应该同时删除占用了被释放通道的字幕
