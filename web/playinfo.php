@@ -34,7 +34,10 @@ else{
 
 
 $语句一 = "SELECT 播放数,标题,说明,缩略图路径,地址,源页面 FROM 动画 WHERE 编号=$动画编号";
-$语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 弹幕 WHERE 动画编号=$动画编号 ORDER BY 播放时间 ASC";
+$语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 弹幕 WHERE 动画编号=$动画编号
+			UNION
+			SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号 FROM 分组弹幕 WHERE 组编号 IN (SELECT 编号 FROM 弹幕分组 WHERE 动画编号=$动画编号)
+			ORDER BY 播放时间 ASC";
 
 if(!$动画数组) $动画数组 = $数据库->查询($语句一);
 

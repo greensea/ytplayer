@@ -9,3 +9,10 @@ body{
 	line-height: 20px;
 	font-size: 14px;
 }
+.GeCiShangChuan {
+	margin-top: 10px;
+}
+.GeCiShangChuan legend {
+	color: #00f;
+	font-weight: bold;
+}
