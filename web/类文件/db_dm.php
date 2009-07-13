@@ -9,7 +9,7 @@ class 数据库达梦类 extends 数据库类{
 
 		if(!$this->连接对象) $this->连接对象 = new com('ADODB.Connection');
 		if($this->数据源 == ''){
-			$语句 = "Provider=DMOLEDB; User ID=$this->用户名; Password=$this->密码; Catalog=$this->模式";
+			$语句 = "Provider=DMOLEDB; User ID=$this->用户名; Password=$this->密码; Catalog=$this->模式; Data Source=127.0.0.1";
 		}
 		else{
 			$语句 = "DSN=$this->数据源";
@@ -20,6 +20,7 @@ class 数据库达梦类 extends 数据库类{
 	
 	public function 查询($语句){
 		if(!$this->是否连接) $this->连接();
+		echo $语句 . '<hr />';
 		$结果 = $this->连接对象->execute($语句, $this->影响行数);
 		
 		//如果不是SELECT之类的语句就不用返回结果集了

@@ -1,0 +1,11 @@
+body{
+	font-size: 12px;
+}
+.BoFang .XinXi{
+	margin: 5px 0;
+}
+.BoFang .XinXi .BiaoTi{
+	font-weight: bold;
+	line-height: 20px;
+	font-size: 14px;
+}

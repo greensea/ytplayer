@@ -20,6 +20,7 @@ class 数据库达梦类 extends 数据库类{
 	
 	public function 查询($语句){
 		if(!$this->是否连接) $this->连接();
+		//echo $语句;
 		$结果 = $this->连接对象->execute($语句, $this->影响行数);
 		
 		//如果不是SELECT之类的语句就不用返回结果集了

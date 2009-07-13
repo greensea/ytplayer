@@ -14,7 +14,6 @@ class 邀踢动画。用户类{
 		global $数据库;
 
 		$是否登录 = false;
-		$编号 = 0;
 
 		$this->互联网地址 = $this->_获取互联网地址();
 		$this->标识序列 = $_COOKIE['idenseq'];

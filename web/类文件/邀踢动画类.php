@@ -26,16 +26,28 @@ class 邀踢动画类{
 	}
 
 	function _获取影片信息($页面地址){
-		$源码 = file_get_contents("http://www.flvxz.com/getFlv.php?url=$页面地址");
-		$结果 = array();
+		//$源码 = file_get_contents("http://www.flvxz.com/getFlv.php?url=$页面地址");
+		//必须发送Cookie才能获取地址了
+		$xmlhttp = new com('MSXML2.ServerXMLHTTP');
+		$xmlhttp->open('GET', 'http://www.flvxz.net', false);
+		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
+		$xmlhttp->send();
+		$xmlhttp->open('GET', "http://www.flvxz.net/getFlv.php?url=$页面地址", false);
+		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
+		$xmlhttp->send();
+		$源码 = $xmlhttp->responseText;
 		
-		if( preg_match('/(.+)<br.+"(http.+?)"/mi', $源码, $结果) == 0 ) return null;
+		$结果 = array();
+
+		//die($源码);
+
+		//if( preg_match('/(.+)<br.+"(http.+?)"/mi', $源码, $结果) == 0 ) return null;
+		if( preg_match('/<a href=\'(http.+?)\'.+;\'>(.+?)\.flv/mi', $源码, $结果) == 0 ) return null;
 
 		$结果[1] = 哔——编码转换($结果[1]);
-
 		return array(
-					'标题' => $结果[1],
-					'地址' => $结果[2]
+					'标题' => $结果[2],
+					'地址' => $结果[1]
 					);
 	}
 
