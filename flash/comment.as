@@ -1,9 +1,9 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
 
 //定义全局常量
-var FLY_SPEED_FAST:Number = 2.5;		//快字幕速度：秒
-var FLY_SPEED_NORMAL:Number = 4;	//中等速度字幕：秒
-var FLY_SPEED_SLOW:Number = 5.5;		//慢字幕速度：秒
+var FLY_SPEED_FAST:Number = 2500;		//快字幕速度：秒
+var FLY_SPEED_NORMAL:Number = 4000;	//中等速度字幕：秒
+var FLY_SPEED_SLOW:Number = 5500;		//慢字幕速度：秒
 
 var FLY_FONTSIZE_BIG:Number = 26;		//字体大小，大：像素
 var FLY_FONTSIZE_NORMAL:Number = 22;	//字体大小，中：像素
@@ -71,7 +71,7 @@ function fly_comment_push(xmlcmt){
 				fontColor:cmts[i].attributes["fontColor"],
 				fontSize:cmts[i].attributes["fontSize"],
 				flyType:cmts[i].attributes["flyType"],
-				flySpeed:FLY_SPEED_NORMAL //单位：s
+				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0) //单位：s
 			}
 			//一系列的判断
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
@@ -229,7 +229,7 @@ function _fly_comment_putScreen(comment){
 	txt._y = channel[0];
 	
 	//显示文本
-	fly_show(txt, FLY_SPEED_NORMAL, comment.sTime, comment.flyType, comment.cmtID);
+	fly_show(txt, comment.flyTime, comment.sTime, comment.flyType, comment.cmtID);
 }
 
 
@@ -647,7 +647,7 @@ function comment_add_comment(con, attr){
 		fontColor:attr.fontColor.toString(16),
 		fontSize:attr.fontSize,
 		flyType:attr.flyType,
-		flySpeed:FLY_SPEED_NORMAL //单位：s
+		flySpeed:(attr.flySpeed / 1000.0) //单位：s
 	}
 
 	//添加到右部评论
