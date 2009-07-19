@@ -647,7 +647,7 @@ function comment_add_comment(con, attr){
 		fontColor:attr.fontColor.toString(16),
 		fontSize:attr.fontSize,
 		flyType:attr.flyType,
-		flySpeed:(attr.flySpeed / 1000.0) //单位：s
+		flySpeed:(attr.flySpeed) //单位：s
 	}
 
 	//添加到右部评论
