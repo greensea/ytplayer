@@ -370,7 +370,6 @@ function _fly_channel_request(cmt, txt:TextField){
 	//分配通道
 	switch(cmt.flyType){
 		case FLY_TYPE_BOTTOM:
-			var minBottomPopsubChl = 0;
 			//设置查找初始位置。chl[0]指的是弹幕的上边框所占据的通道号
 			if(chl[1].isSubtitle){
 				chl[0] = ytVideo._height - chl[1].channelBreadth;
@@ -378,18 +377,10 @@ function _fly_channel_request(cmt, txt:TextField){
 			else{
 				chl[0] = fly_subtitle_redline - chl[1].channelBreadth;
 			}
-			minBottomPopsubChl = chl[0];
 			
 			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM} minBottomPopsubChl=" + chl[0]);
 			
 			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
-			var fFlag = false;
-			var stIndex = _fly_var_channels.length - 1;
-			var maxConflickBottomBorder = -9999;
-			var maxConflickTopBorder;
-			var tryChannel = -9999;
-			
-			fFlag = true;
 			tryChannel = chl[0];
 			for (var i = _fly_var_channels.length - 1; i >= 0; i--) {
 				// 跳过不是底部的弹幕
@@ -428,131 +419,7 @@ function _fly_channel_request(cmt, txt:TextField){
 			cl[1] = 0;	//废弃行，本来是层编号的
 			
 			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM}(分配通道) cmtID=" + cmt.cmtID + ", cmttext=" + cmt.cmtText + ", cl[0] = " + cl[0]);
-			
-			break;
-			
-			// ----------------------------------------------------------------------
-					
-			
-			//如果当前没有通道则可以直接使用此通道，若有则可直接分配
-			// 		如果已经分配底部弹幕，则检查如果使用当前申请的通道，是否会和当前存在的最下面的底部弹幕冲突，
-			// 如果不冲突也可以直接分配。如果冲突，则必须从当前弹幕的上边框开始查找
-			// 		这里的循环不仅查找是否有底部弹幕，同时查找最下面的弹幕的底边框占用的通道
-			fFlag = true;
-			for(var i = 0; i < _fly_var_channels.length; i++){
-				if(_fly_var_channels[i][1].flyType == FLY_TYPE_BOTTOM){
-					// 发现一个底部弹幕，首先试图删除（判断这个弹幕是否到了应该删除的时间）。
-					// 如果删除失败，则当作这个弹幕是存在的
-					trace("·[_fly_channel_request]{FLY_TYPE_BOTTOM}(试图删除弹幕）cmtID=" + _fly_var_channels[i][1].cmtID);
-					if (_fly_delete(_fly_var_channels[i][1].cmtID, eval("popsub_" + _fly_var_channels[i][1].cmtID)) == false) {
-						// 删除失败，检查是否冲突。若不冲突，设置tryChannel；若冲突，则直接从此通道上面开始
-						fFlag = false;
-						if (maxConflickBottomBorder < _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth) {
-							maxConflickBottomBorder = _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth;
-							maxConflickTopBorder = _fly_var_channels[i][0];
-						}
-					}
-					else {
-						// 删除成功的话则不用记录
-						i--;
-					}
-				}
-			}
-			
-			
-			
-			// 发现已经有底部弹幕，检查一下当前申请的通道会不会和已有最底下的弹幕冲突，如果冲突，则从这个最底下弹幕的通道开始查找
-			/*
-			if (!fFlag) {
-				trace("|—·[_fly_channel_request]{FLY_TYPE_BOTTOM}（发现最低弹幕）检查是否会和该弹幕冲突：chl[0]=" + chl[0] + ", maxConflickBottomBorder=" + maxConflickBottomBorder + ", txt=" + _fly_var_channels[i][1].text);
-				if (chl[0] <= maxConflickBottomBorder) {
-					// 冲突，从当前弹幕的上边框开出查找
-					trace("　｜——冲突");
-					fFlag = false;
-					minBottomPopsubChl = maxConflickTopBorder;
-					trace("set to " + minBottomPopsubChl);
-
-				}
-				else {
-					// 不冲突，直接可以使用当前通道。设 fFlag = ture;
-					// 因为fFlag本来就是 true 的，直接退出循环就可以了
-					trace("　｜——不冲突");
-					break;
-				}
-			}
-			*/
-			
-			//如果当前已经分配有底部通道，进行判断
-			if(!fFlag){	//判断一下使用现在这个通道是否会造成冲突
-					//逻辑：已分配的最后一个通道的尾小于本通道头则不冲突
-				trace("·（该通道是否冲突）" + _fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
-				trace("|——检查通道：cmtID=" + _fly_var_channels[stIndex][1].cmtID + ", text=" + _fly_var_channels[stIndex][1].text);
-				if(_fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth < chl[0]){
-					fFlag = true;
-					trace("|——不冲突")
-				}
-			}
-				
-			
-			//查找到已有的通道头大于我们的初始通道尾的通道
-			while(stIndex >= 0 && !fFlag){
-				if(_fly_var_channels[stIndex][0] > chl[0] + chl[1].channelBreadth){
-					fFlag = true;
-					trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) + ", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
-				}
-				else{
-					stIndex--;
-				}
-			}
-			
-			//如果找不到通道尾小于我们初始通道的通道的话，则可以直接使用现在的通道
-			if(stIndex == 0){
-				fFlag = true;
-			}
-			else if(!fFlag){	//否则当然还要继续查找
-				fFlag = false;
-			}
-
-			trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
-			//如果还没有能分配通道，则进行查找分配
-			if(!fFlag){
-				while(!fFlag && stIndex >= 0){
-					//如果我们的头通道小于等于他的尾通道，则会发生冲突
-					var itTail = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth;
-					if(chl[0] <= itTail){
-						chl[0] = _fly_var_channels[stIndex][0] - chl[1].channelBreadth - 1;
-						stIndex--;
-					}
-					else{
-						//不冲突的话就可以把我们的分配到他头上去
-						fFlag = true;
-					}
-				}
-				//如果已经找到通道头还没有找到可用通道，（若有上一个通道）则直接分配到上一个通道的头通道去
-				if(stIndex < 0){
-					trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
-					//chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
-					chl[0] = minBottomPopsubChl - chl[1].channelBreadth - 1;
-					fFlag = true;
-				}
-			}
-			//对负数的通道取模
-			
-			if(chl[0] <= 0){
-				var modNum = 0;
-				if(chl[1].isSubtitle){
-					modNum = (ytVideo._height - chl[1].channelBreadth);
-				}
-				else{
-					modNum = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
-				}
-				chl[0] = chl[0] % modNum + modNum;
-			}
-			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
-			cl[1] = 0;	//废弃行，本来是层编号的
-			
-			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM}(分配通道) cmtID=" + cmt.cmtID + ", cmttext=" + cmt.cmtText + ", cl[0] = " + cl[0]);
-			
+						
 			break;
 			
 		
