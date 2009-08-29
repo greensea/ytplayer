@@ -31,7 +31,7 @@ function writer_submit(){
 								 fontColor:_writer_var_fontcolor,
 								 flyType:_writer_var_commentmode, 
 								 sTime:playTime,
-								 flySpeed:FLY_SPEED_NORMAL,
+								 flySpeed:FLY_SPEED_NORMAL / 1000,
 								 isSubtitle:_writer_var_issubtitle,
 								 commentTime:(new Date())
 						});
