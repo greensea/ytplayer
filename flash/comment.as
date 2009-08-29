@@ -292,8 +292,9 @@ function _fly_delete(cmtID:Number, txt:TextField){
 		}
 	}
 	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
-
-	if(leaveTime > 0 && leaveTime <= cmt.flySpeed && _comment_var_display){
+	trace("[fly_delete]删除判断：leaveTime = " + cmt.sTime + " + " + cmt.flySpeed + " - " + _video_get_time());
+	trace("[_fly_delete]删除判断：leaveTime=" + leaveTime + ", cmt.flySpeed=" + cmt.flySpeed + ", _comment_var_display=" + _comment_var_display);
+	if(leaveTime > 0 && _comment_var_display){
 		//——【不删除】
 		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
 		return false;
