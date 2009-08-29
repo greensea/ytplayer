@@ -285,6 +285,7 @@ function _fly_delete(cmtID:Number, txt:TextField){
 	var cmt = null;
 	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
 	//但如果是不显示弹幕的话则不管三七二十一一律删除
+	// 另外，为了配合通道选择时试图删除当前弹幕获取最低通道，所以也应该判断这个弹幕是否可删除
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i][1].cmtID == cmtID){
 			cmt = _fly_var_channels[i][1];
@@ -292,20 +293,27 @@ function _fly_delete(cmtID:Number, txt:TextField){
 		}
 	}
 	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
-	trace("[fly_delete]删除判断：leaveTime = " + cmt.sTime + " + " + cmt.flySpeed + " - " + _video_get_time());
+	trace("[fly_delete]删除判断：leaveTime = " + cmt.sTime + " + " + cmt.flySpeed + " - " + _video_get_time() + ", rTime - nsTime = " + (_video_get_time() - ns.time));
 	trace("[_fly_delete]删除判断：leaveTime=" + leaveTime + ", cmt.flySpeed=" + cmt.flySpeed + ", _comment_var_display=" + _comment_var_display);
-	if(leaveTime > 0 && _comment_var_display){
+	// 这里比较哔——。在通道选择的时候会调用此函数试图删除已经应该删除的弹幕以获得最低弹幕通道。理论上来说在选择通道的时候计算弹幕消失的时间应该是0了，但是结果却是0.0109999999999xx，或者0.0190000000xx之类的，有10毫秒左右的误差
+	// 据猜测这个误差可能是timer控件的精确度引起的，而且嘛，反正10毫秒的时间人也反应不过来，干脆就这样。如果弹幕剩余的生存期已经小于0.02秒的话，也直接删除了。
+	// 于是下面的 leaveTime 就改成 > 0.02，只有生存期大于0.02秒才不删除
+	// 然后发现如果性能比较差劲的时候，这个结果可能会大于0.02，变成0.02xxxx，于是决定改成0.04，这样帧速变成25，也能让人眼接受了
+	if(leaveTime > 0.04 && _comment_var_display){
 		//——【不删除】
 		setTimeout(_fly_delete, leaveTime * 1000, cmtID, txt);
+		
 		return false;
 	}
 	else{
 		//——【删除】
-		trace(getTimer() + " (delete) cmtID=" + cmtID + ", txt=" + txt.text);
+		trace(getTimer() + ",[_fly_delete](删除弹幕) cmtID=" + cmtID + ", txt=" + txt.text);
 		//释放通道
 		_fly_channel_release(cmtID);
 		//删除文本实例
 		txt.removeTextField();
+		
+		return true;
 	}
 }
 
@@ -334,7 +342,7 @@ function _fly_channel_release(cmtID){
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i][1].cmtID == cmtID){
 			_fly_var_channels.splice(i, 1);
-			i = _fly_var_channels.length;
+			break;
 		}
 	}
 }		
@@ -363,7 +371,7 @@ function _fly_channel_request(cmt, txt:TextField){
 	switch(cmt.flyType){
 		case FLY_TYPE_BOTTOM:
 			var minBottomPopsubChl = 0;
-			//设置查找初始位置
+			//设置查找初始位置。chl[0]指的是弹幕的上边框所占据的通道号
 			if(chl[1].isSubtitle){
 				chl[0] = ytVideo._height - chl[1].channelBreadth;
 			}
@@ -372,26 +380,116 @@ function _fly_channel_request(cmt, txt:TextField){
 			}
 			minBottomPopsubChl = chl[0];
 			
+			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM} minBottomPopsubChl=" + chl[0]);
+			
 			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
 			var fFlag = false;
 			var stIndex = _fly_var_channels.length - 1;
+			var maxConflickBottomBorder = -9999;
+			var maxConflickTopBorder;
+			var tryChannel = -9999;
+			
+			fFlag = true;
+			tryChannel = chl[0];
+			for (var i = _fly_var_channels.length - 1; i >= 0; i--) {
+				// 跳过不是底部的弹幕
+				if (_fly_var_channels[i][1].flyType != FLY_TYPE_BOTTOM) continue;
+				
+				// 先试图删除当前弹幕
+				if (_fly_delete(_fly_var_channels[i][1].cmtID, eval("popsub_" + _fly_var_channels[i][1].cmtID)) == false) {
+					// 删除失败，必须处理此弹幕
+					// 判断是否冲突，如果冲突，则使用该弹幕的顶边框通道作为申请通道底边框通道；如果不冲突，可以使用当前通道，并退出
+					// 申请的通道小于当前弹幕的底边框通道，则冲突
+					if (tryChannel < _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth) {
+						tryChannel = _fly_var_channels[i][0] - chl[1].channelBreadth;
+						chl[0] = tryChannel;
+					}
+					else {
+						break;
+					}
+				}
+				else {
+					// 删除成功，可以跳过
+					i--;
+				}
+			}
+			
+			if(chl[0] <= 0){
+				var modNum = 0;
+				if(chl[1].isSubtitle){
+					modNum = (ytVideo._height - chl[1].channelBreadth);
+				}
+				else{
+					modNum = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
+				}
+				chl[0] = chl[0] % modNum + modNum;
+			}
+			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
+			cl[1] = 0;	//废弃行，本来是层编号的
+			
+			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM}(分配通道) cmtID=" + cmt.cmtID + ", cmttext=" + cmt.cmtText + ", cl[0] = " + cl[0]);
+			
+			break;
+			
+			// ----------------------------------------------------------------------
+					
 			
 			//如果当前没有通道则可以直接使用此通道，若有则可直接分配
+			// 		如果已经分配底部弹幕，则检查如果使用当前申请的通道，是否会和当前存在的最下面的底部弹幕冲突，
+			// 如果不冲突也可以直接分配。如果冲突，则必须从当前弹幕的上边框开始查找
+			// 		这里的循环不仅查找是否有底部弹幕，同时查找最下面的弹幕的底边框占用的通道
 			fFlag = true;
 			for(var i = 0; i < _fly_var_channels.length; i++){
 				if(_fly_var_channels[i][1].flyType == FLY_TYPE_BOTTOM){
-					fFlag = false;
-					minBottomPopsubChl = _fly_var_channels[i][0];
-					i = 99999;
+					// 发现一个底部弹幕，首先试图删除（判断这个弹幕是否到了应该删除的时间）。
+					// 如果删除失败，则当作这个弹幕是存在的
+					trace("·[_fly_channel_request]{FLY_TYPE_BOTTOM}(试图删除弹幕）cmtID=" + _fly_var_channels[i][1].cmtID);
+					if (_fly_delete(_fly_var_channels[i][1].cmtID, eval("popsub_" + _fly_var_channels[i][1].cmtID)) == false) {
+						// 删除失败，检查是否冲突。若不冲突，设置tryChannel；若冲突，则直接从此通道上面开始
+						fFlag = false;
+						if (maxConflickBottomBorder < _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth) {
+							maxConflickBottomBorder = _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth;
+							maxConflickTopBorder = _fly_var_channels[i][0];
+						}
+					}
+					else {
+						// 删除成功的话则不用记录
+						i--;
+					}
 				}
 			}
+			
+			
+			
+			// 发现已经有底部弹幕，检查一下当前申请的通道会不会和已有最底下的弹幕冲突，如果冲突，则从这个最底下弹幕的通道开始查找
+			/*
+			if (!fFlag) {
+				trace("|—·[_fly_channel_request]{FLY_TYPE_BOTTOM}（发现最低弹幕）检查是否会和该弹幕冲突：chl[0]=" + chl[0] + ", maxConflickBottomBorder=" + maxConflickBottomBorder + ", txt=" + _fly_var_channels[i][1].text);
+				if (chl[0] <= maxConflickBottomBorder) {
+					// 冲突，从当前弹幕的上边框开出查找
+					trace("　｜——冲突");
+					fFlag = false;
+					minBottomPopsubChl = maxConflickTopBorder;
+					trace("set to " + minBottomPopsubChl);
+
+				}
+				else {
+					// 不冲突，直接可以使用当前通道。设 fFlag = ture;
+					// 因为fFlag本来就是 true 的，直接退出循环就可以了
+					trace("　｜——不冲突");
+					break;
+				}
+			}
+			*/
 			
 			//如果当前已经分配有底部通道，进行判断
 			if(!fFlag){	//判断一下使用现在这个通道是否会造成冲突
 					//逻辑：已分配的最后一个通道的尾小于本通道头则不冲突
-				//trace(_fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
+				trace("·（该通道是否冲突）" + _fly_var_channels[stIndex][0] + " + " + _fly_var_channels[stIndex][1].channelBreadth + " < " + chl[0]);
+				trace("|——检查通道：cmtID=" + _fly_var_channels[stIndex][1].cmtID + ", text=" + _fly_var_channels[stIndex][1].text);
 				if(_fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth < chl[0]){
 					fFlag = true;
+					trace("|——不冲突")
 				}
 			}
 				
@@ -400,7 +498,7 @@ function _fly_channel_request(cmt, txt:TextField){
 			while(stIndex >= 0 && !fFlag){
 				if(_fly_var_channels[stIndex][0] > chl[0] + chl[1].channelBreadth){
 					fFlag = true;
-					//trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) + ", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
+					trace("发现可用通道： " + _fly_var_channels[stIndex][0] + " <= " + (chl[0] + chl[1].channelBreadth) + ", chl[0]=" + chl[0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", stIndex=" + stIndex);
 				}
 				else{
 					stIndex--;
@@ -415,7 +513,7 @@ function _fly_channel_request(cmt, txt:TextField){
 				fFlag = false;
 			}
 
-			//trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
+			trace("仍未能分配：stIndex=" + stIndex + ", fFlag=" + fFlag);
 			//如果还没有能分配通道，则进行查找分配
 			if(!fFlag){
 				while(!fFlag && stIndex >= 0){
@@ -432,7 +530,7 @@ function _fly_channel_request(cmt, txt:TextField){
 				}
 				//如果已经找到通道头还没有找到可用通道，（若有上一个通道）则直接分配到上一个通道的头通道去
 				if(stIndex < 0){
-					//trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
+					trace("无可用通道,stIndex=" + stIndex + ", _fly_var_channels[0][0]=" + _fly_var_channels[0][0] + ", chl[1].chlBth=" + chl[1].channelBreadth + ", chlLength=" + _fly_var_channels.length);
 					//chl[0] = _fly_var_channels[0][0] - chl[1].channelBreadth - 1;
 					chl[0] = minBottomPopsubChl - chl[1].channelBreadth - 1;
 					fFlag = true;
@@ -452,6 +550,9 @@ function _fly_channel_request(cmt, txt:TextField){
 			}
 			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
 			cl[1] = 0;	//废弃行，本来是层编号的
+			
+			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM}(分配通道) cmtID=" + cmt.cmtID + ", cmttext=" + cmt.cmtText + ", cl[0] = " + cl[0]);
+			
 			break;
 			
 		
