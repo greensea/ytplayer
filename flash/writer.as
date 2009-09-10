@@ -78,10 +78,10 @@ function _writer_submit_timeout(){
 
 //评论样式窗口显示关闭
 function writer_flytype_window_hide(){
-	_level0.flyTypeWindow._visible = false;
+	_level0.window_comment_style._visible = false;
 }
 function writer_flytype_window_show(){
-	_level0.flyTypeWindow._visible = true;
+	_level0.window_comment_style._visible = true;
 }
 
 //=====v====v======v======评论样式设置部分========

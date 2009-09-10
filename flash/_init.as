@@ -18,8 +18,13 @@ dgrComment.setStyle("fontFamily", "宋体");
 	
 tip_add("加载参数: b=" + _root.b);
 
+// 设置层可见性
 _root.sts._visible = false;
+_root.window_comment_style._visible = false;
 	
+// 设置层排列顺序
+mx.behaviors.DepthControl.bringToFront(_root.stsLoading)
+
 //设置音量
 function init_set_volume(){
 	var volumeNum = get_cookie("volume");
