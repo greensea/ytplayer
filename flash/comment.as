@@ -227,9 +227,8 @@ function _fly_comment_putScreen(comment){
 	//请求通道，并将文本放到通道上
 	var channel = _fly_channel_request(comment, txt);
 	txt._y = channel[0];
-	
 	//显示文本
-	fly_show(txt, comment.flyTime, comment.sTime, comment.flyType, comment.cmtID);
+	fly_show(txt, comment.flySpeed, comment.sTime, comment.flyType, comment.cmtID);
 }
 
 
@@ -251,7 +250,7 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 	}
 	else{		//定点显示的字幕
 		txt._visible = true;
-		//trace("[fly_show] text=" + txt.text + ", speed=" + speed + ", _visible=" + txt._visible + ", txt._x=" + txt._x + ", txt._y=" + txt._y);
+		trace("[fly_show] text=" + txt.text + ", speed=" + speed + ", _visible=" + txt._visible + ", txt._x=" + txt._x + ", txt._y=" + txt._y);
 		setTimeout(_fly_delete, speed * 1000, cmtID, txt);
 	}
 }
@@ -260,11 +259,15 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 	//若已经超出时间则退出
 	var timePass:Number = _video_get_time() - startTime;
-	if(timePass > speed || timePass <= 0){
+	//trace("[_fly_move]（计算是否超时） timePass=" + timePass + ", speed=" + speed + ", _video_get_time() - ns.time = " + (_video_get_time() - ns.time));
+	/*
+	 * 因为这里的timePass计算出来的值可能受到计算机性能影响而造成偏差，所以这里加上预期的偏差值
+	 */
+	if(timePass > speed || timePass + Math.abs(_video_get_time() - ns.time) <= 0){
 		_fly_delete(cmtID, txt);
 		return false;	
 	}
-	
+
 	//计算当前字幕的x坐标（可能是负值）
 	var txtX = (FLY_STARTING_X + txt.textWidth) * (timePass / speed);		//字幕离开起点的距离
 	txtX = FLY_STARTING_X - txtX;
@@ -276,6 +279,7 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 		txt._x = txtX;
 		//debug = debug + "\n" + ns.time + "," + startTime + "," + timePass + "," + getTimer() + "," + txtX;
 	}
+	//trace("(_fly_move) x = " + txtX + ", cmtID=" + cmtID + ", timePass=" + timePass + ", speed=" + speed + ", txt.textWidth = " + txt.textWidth + ", FLY_STARTING_X=" + FLY_STARTING_X);
 	setTimeout(_fly_move, FLY_FLASH_INTERVAL, txt, speed, startTime, cmtID);
 }
 
