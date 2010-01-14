@@ -59,12 +59,12 @@ class 邀踢动画类{
 								));
 		$源码 = curl_exec($curl);
 		
-		$地址正规式 = '/playMedia\(document,\'(.+?)\',/mi';
+		$地址正规式 = '/\.swf\?file=(.+?)"/mi';
 		$标题正规式 = '/<meta name="title" content="(.+?)" \/>/mi';
 		
 		if (preg_match($地址正规式, $源码, $地址结果) == 0) return null;
 		if (preg_match($标题正规式, $源码, $标题结果) == 0) return null;
-		
+
 		return array(
 					'标题' => $标题结果[1],
 					'地址' => $地址结果[1]
