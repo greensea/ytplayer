@@ -13,7 +13,16 @@ function main(){
 	
 	//截获影片头数据
 	ns.onMetaData = function(infoObject:Object) {
+		w = infoObject["width"];
+		h = infoObject["height"];
+		oh = ytVideo._height;
 		video_var_timeTotal = infoObject["duration"];
+		
+		show_black_bg();
+		ytVideo._height = ytVideo._width * h / w;
+		ytVideo._y = (oh - ytVideo._height) / 2;
+		
+		tip_add("视频信息：" + (Math.round(infoObject["duration"] * 100) / 100) + "s, " + infoObject["width"] + "x" + infoObject["height"]);
 	}
 	//影片载入状态
 	ns.onStatus = function(infoObject){
@@ -325,6 +334,13 @@ function video_button_enable(b){
 	}
 }
 				
+
+/**********************/
+/***    其他函数    ***/
+/*********************/
+function show_black_bg(){
+	bg_black._alpha = 100;
+}
 
 							
 /*********调试函数**********/

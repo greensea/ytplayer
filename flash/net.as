@@ -23,7 +23,7 @@ function video_init(){
 	else{
 		video_querystring_p = parseInt(_root.b);
 	}
-	if(!_root.b) video_querystring_p = 1;
+	if(!_root.b) video_querystring_p = 1;	//默认的视频编号，调试的时候可以改这个为指定的视频编号
 	
 	var url = URL_PREFIX + "playinfo.php?relocate=0&";
 	if(typeof(video_querystring_p) == "number"){
