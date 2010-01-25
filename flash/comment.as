@@ -309,7 +309,7 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
  */
 function _fly_delete(cmtID:Number, txt:TextField){
 	var cmt = null;
-	if (txt == null) txt = eval("popsub_" + _fly_var_channels[i].cmtID);
+	if (txt == null) txt = eval("popsub_" + cmtID);
 	
 	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
 	//但如果是不显示弹幕的话则不管三七二十一一律删除
@@ -403,7 +403,10 @@ function _channel_request(cmt:Object, txt:TextField) {
 	var i:Number;
 	var gotChannel:Boolean;
 	var curr:channel_t = new channel_t(txt, cmt);
-
+	
+	/**
+	 * 对于已经指定了通道的弹幕，就不用进行通道申请，直接分配指定的通道就可以了
+	 */
 	if (curr.channel != null) {
 		_fly_channel_occupy(curr);
 		ret[0] = curr.channel;
@@ -417,19 +420,19 @@ function _channel_request(cmt:Object, txt:TextField) {
 	 * 而底部类弹幕则是从负的影片高度通道开始查找冲突
 	 */
 	if (cmt.flyType == FLY_TYPE_FLY || cmt.flyType == FLY_TYPE_TOP) {
-		ret[0] = 0;
+		curr.channel = 0;
 	}
 	else {
-		ret[0] = -popsub_area_height;
+		curr.channel = -popsub_area_height;
 	}
-	curr.channel = ret[0];
+	
 	
 	/**
 	 * 确定首个开始检查的通道之后，就调用冲突查询函数，列出所有屏幕上与当前通道冲突的弹幕占用的通道以及弹幕数据
 	 */
 	do {
 		gotChannel = true;
-		conflicts = _channel_get_conflicts(int(curr.channel), int(curr.channelBreadth));
+		conflicts = _channel_get_conflicts(curr.channel, curr.channelBreadth);
 		//trace("冲突检查结果数：" + conflicts.length);
 		for (i = 0; i < conflicts.length; i++) {
 			/**
@@ -444,11 +447,9 @@ function _channel_request(cmt:Object, txt:TextField) {
 			else {
 				// 存在冲突，不能分配这个通道
 				trace("conflicts[" + i + "].channel=" + conflicts[i].channel);
-				ret[0] = conflicts[i].channel + int(conflicts[i].channelBreadth) + 1;
-				curr.channel = ret[0];
+				curr.channel = conflicts[i].channel + conflicts[i].channelBreadth + 1;
 				gotChannel = false;
 				//trace("设置通道到 " + ret[0]);
-				break;
 			}
 		}
 	}
@@ -472,15 +473,18 @@ function _channel_request(cmt:Object, txt:TextField) {
  */
 function _channel_get_conflicts(r_chl:Number, r_breadth:Number) {
 	var ret:Array = new Array();
+	var chl_bot:Number;
+	var chl_top:Number;
+	var cur_chl:channel_t;
 	var i:Number = 0;
 	var r_bot:Number = r_chl + r_breadth;
 	
 	trace(_fly_var_channels[i].text);
 	trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
 	for (i = 0; i < _fly_var_channels.length && (_fly_var_channels[i].channel < r_chl + r_breadth || true); i++) {
-		var cur_chl:channel_t = _fly_var_channels[i];
-		var chl_top:Number = int(cur_chl.channel);
-		var chl_bot:Number = int(chl_top) + int(cur_chl.channelBreadth);
+		cur_chl = _fly_var_channels[i];
+		chl_top = cur_chl.channel;
+		chl_bot = chl_top + cur_chl.channelBreadth;
 		/**
 		 * 见图 1.2
 		 */
@@ -535,12 +539,14 @@ function _channel_check_conflict_fly(curr:channel_t, prev:channel_t) {
 	var curr_left_to_area_left:Number;		// 当前弹幕的左边缘碰到播放区域左边的片时
 	var prev_right:Number;					// 前弹幕右边缘的水平坐标
 	var curr_left_to_prev_right:Number;	// 当前弹幕碰到前弹幕（仅限静止弹幕）右边缘的时间
+	var prev_txt_x:Number;
 	
 	/**
 	 * 计算方法参考 图 2.1
 	 */
+	prev_txt_x = eval("popsub_" + prev.cmtID)._x;
 	curr_left_to_area_left = (curr.deathTime - curr.sTime) * (popsub_area_width / (curr.textWidth + popsub_area_width)) + curr.sTime;
-	prev_right = eval("popsub_" + prev.cmtID)._x + prev.textWidth;
+	prev_right = prev_txt_x + prev.textWidth;
 	curr_left_to_prev_right = (curr.deathTime - curr.sTime) * ((popsub_area_width - prev_right) / (curr.textWidth + popsub_area_width)) + curr.sTime;
 	
 	/**
@@ -555,7 +561,7 @@ function _channel_check_conflict_fly(curr:channel_t, prev:channel_t) {
 			if (curr_left_to_area_left < prev.deathTime) return true;
 			
 			// 出不来
-			if (eval("popsub_" + prev.cmtID)._x + prev.textWidth >= popsub_area_width) return true;
+			if (prev_txt_x + prev.textWidth >= popsub_area_width) return true;
 			
 			break;
 			
