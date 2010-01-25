@@ -1,5 +1,7 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
 
+import channel_t;
+
 //定义全局常量
 var FLY_SPEED_FAST:Number = 2500;		//快字幕速度：秒
 var FLY_SPEED_NORMAL:Number = 4000;	//中等速度字幕：秒
@@ -41,10 +43,14 @@ var fly_var_queue:Object = {
 
 var fly_var_indexNext = 0;
 var fly_var_queueLength = 0;
+var _fly_var_level_accumulator = 0;
+
 var fly_var_queue:Array = new Array();
 var _fly_var_channels:Array = new Array();		//Array(channelID, {cmtID:Number, channelBreadth:Number, deathTime:playTime-Seconds})
 var fly_subtitle_redline = ytVideo._height;			//当前字幕所占据的高度
-var _fly_var_level_accumulator = 0;
+
+var popsub_area_height = ytVideo._height;
+var popsub_area_width = ytVideo._width;
 
 var _comment_var_display = true;		//是否显示评论
 var _comment_user_total = 0;		//记录用户在本页面发表的评论总数
@@ -58,11 +64,16 @@ function fly_comment_push(xmlcmt){
 	fly_var_queue = new Array();
 	for(var i = 0; i < cmts.length; i++){
 		if(cmts[i].nodeName){
+			// 弹幕过滤
+			//if (cmts[i].attributes["flyType"] != "bottom") continue;
+			//if (cmts[i].attributes["flyType"] == "bottom") cmts[i].attributes["flyType"] = "top";
+			// 增加到播放器评论表格
 			dgrComments.addItem({
 				片时:_sec2disTime(cmts[i].attributes["playTime"]),
 				内容:cmts[i].lastChild.nodeValue, 
 				评论时间:_timestamp2date(cmts[i].attributes["commentTime"])
 				});
+				
 			//压入弹幕数据库
 			var newCmt:Object = {
 				cmtID:cmts[i].attributes["id"],
@@ -73,6 +84,7 @@ function fly_comment_push(xmlcmt){
 				flyType:cmts[i].attributes["flyType"],
 				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0) //单位：s
 			}
+			
 			//一系列的判断
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
@@ -160,7 +172,7 @@ trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _vid
 		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText + ", _fly_var_channels.length=" + _fly_var_channels.length);
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
-		if(comment.cmtID == _fly_var_channels[i][1].cmtID){
+		if(comment.cmtID == _fly_var_channels[i].cmtID){
 			_fly_comment_set_nextnew(comment);
 			return false;
 		}
@@ -225,7 +237,8 @@ function _fly_comment_putScreen(comment){
 	}
 	
 	//请求通道，并将文本放到通道上
-	var channel = _fly_channel_request(comment, txt);
+	//var channel = _fly_channel_request(comment, txt);
+	var channel = _channel_request(comment, txt);
 	txt._y = channel[0];
 	//显示文本
 	fly_show(txt, comment.flySpeed, comment.sTime, comment.flyType, comment.cmtID);
@@ -283,16 +296,26 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 	setTimeout(_fly_move, FLY_FLASH_INTERVAL, txt, speed, startTime, cmtID);
 }
 
-//内部 删除评论
-var debug:String;
+/**
+ * 删除弹幕
+ * 
+ * 根据弹幕编号来删除现有的弹幕
+ * （我对这个函数还有疑问，但是现在先不审阅了，感觉上这个函数做的事情太多了点，不过可能也是我想错了，先留着在这里好了——2010.1.22）
+ * 
+ * @param Number cmtID	欲删除的弹幕编号
+ * @param TextField txt	该弹幕对应的文本域（可为空）
+ * @return Boolean	若删除成功，返回true，删除失败或未删除则返回false，找不到此弹幕或文本域也返回false
+ */
 function _fly_delete(cmtID:Number, txt:TextField){
 	var cmt = null;
+	if (txt == null) txt = eval("popsub_" + _fly_var_channels[i].cmtID);
+	
 	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
 	//但如果是不显示弹幕的话则不管三七二十一一律删除
 	// 另外，为了配合通道选择时试图删除当前弹幕获取最低通道，所以也应该判断这个弹幕是否可删除
 	for(var i = 0; i < _fly_var_channels.length; i++){
-		if(_fly_var_channels[i][1].cmtID == cmtID){
-			cmt = _fly_var_channels[i][1];
+		if(_fly_var_channels[i].cmtID == cmtID){
+			cmt = _fly_var_channels[i];
 			i = _fly_var_channels.length;
 		}
 	}
@@ -331,273 +354,331 @@ function _fly_channel_occupy(chl){
 	//数组不空才需要查找
 	var i = 0;
 	while(i < _fly_var_channels.length){
-		if(_fly_var_channels[i][0] >= chl[0]){
+		if(_fly_var_channels[i].channel >= chl.channel){
 			break;
 		}
 		i++;
 	}
 	_fly_var_channels.splice(i, 0, chl);
-
 }
 	
 
 //内部 通道释放
 function _fly_channel_release(cmtID){
 	for(var i = 0; i < _fly_var_channels.length; i++){
-		if(_fly_var_channels[i][1].cmtID == cmtID){
+		if(_fly_var_channels[i].cmtID == cmtID){
 			_fly_var_channels.splice(i, 1);
 			break;
 		}
 	}
 }		
 
-//内部 核心 通道请求
-function _fly_channel_request(cmt, txt:TextField){
-	var debugstr:String;
+
+/***************************************/
+/********** 弹幕通道申请函数 *************/
+/***************************************/
+/**
+ * 数据类型说明
+ * 
+ * typedef channel_t
+ * channel_t 类型数据
+ * 
+ * 该数据类型同时为 _fly_var_channels 数组所使用
+ */
+ 
+/**
+ * 分配通道
+ * 
+ * 该函数会根据当前屏幕上的弹幕情况，决定分配哪个通道给申请通道的弹幕
+ * 
+ * @param Object cmt	申请通道的弹幕对象
+ * @param TextField txt		已经初始化的文本域对象
+ * @return Array	一维数组，r[0]表示申请到的通道，已经根据影片高度取模，可以直接显示；r[1]表示弹幕所在层
+ */
+function _channel_request(cmt, txt:TextField) {
+	var ret = Array(0, 1);
+	var chl_try:Number;
+	var conflicts:Array;
+	var i:Number;
+	var gotChannel:Boolean;
+	var curr:channel_t = new channel_t(txt, cmt);
 	
-	var cl = Array(1, 1);	//(通道，层) cl-->Channel Level
-	/*数据结构定义 _fly_var_channels */
-	var lastCheckShareChannel = 0;
-	var chl = new Array(0, 
-							{
-							cmtID:cmt.cmtID, 
-							channelBreadth:cmt.fontSize + 2, 
-							deathTime:(cmt.sTime + cmt.flySpeed), 
-							textWidth:txt.textWidth, 
-							text:cmt.cmtText, 
-							sTime:cmt.sTime,
-							flyType:cmt.flyType,
-							flySpeed:cmt.flySpeed
-							}
-					   	);
+	/**
+	 * 特别地，对于底部类型的弹幕，其通道是从负的影片高度开始的，并且和飞行类以及顶部弹幕不冲突
+	 * 查找冲突弹幕的时候，这两种类型的弹幕就要分开处理，顶部类弹幕自然是从0号通道开始查找冲突
+	 * 而底部类弹幕则是从负的影片高度通道开始查找冲突
+	 */
+	if (cmt.flyType == FLY_TYPE_FLY || cmt.flyType == FLY_TYPE_TOP) {
+		ret[0] = 0;
+	}
+	else {
+		ret[0] = -popsub_area_height;
+	}
+	curr.channel = ret[0];
 	
-	//分配通道
-	switch(cmt.flyType){
-		case FLY_TYPE_BOTTOM:
-			//设置查找初始位置。chl[0]指的是弹幕的上边框所占据的通道号
-			if(chl[1].isSubtitle){
-				chl[0] = ytVideo._height - chl[1].channelBreadth;
-			}
-			else{
-				chl[0] = fly_subtitle_redline - chl[1].channelBreadth;
-			}
-			
-			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM} minBottomPopsubChl=" + chl[0]);
-			
-			//从尾开始查找可用的通道，因为第二页以后就是负的通道ID，所以基本上不会与FLY和TOP的字幕相互影响
-			tryChannel = chl[0];
-			for (var i = _fly_var_channels.length - 1; i >= 0; i--) {
-				// 跳过不是底部的弹幕
-				if (_fly_var_channels[i][1].flyType != FLY_TYPE_BOTTOM) continue;
-				
-				// 先试图删除当前弹幕
-				if (_fly_delete(_fly_var_channels[i][1].cmtID, eval("popsub_" + _fly_var_channels[i][1].cmtID)) == false) {
-					// 删除失败，必须处理此弹幕
-					// 判断是否冲突，如果冲突，则使用该弹幕的顶边框通道作为申请通道底边框通道；如果不冲突，可以使用当前通道，并退出
-					// 申请的通道小于当前弹幕的底边框通道，则冲突
-					if (tryChannel < _fly_var_channels[i][0] + _fly_var_channels[i][1].channelBreadth) {
-						tryChannel = _fly_var_channels[i][0] - chl[1].channelBreadth;
-						chl[0] = tryChannel;
-					}
-					else {
-						break;
-					}
-				}
-				else {
-					// 删除成功，可以跳过
-					i--;
-				}
-			}
-			
-			if(chl[0] <= 0){
-				var modNum = 0;
-				if(chl[1].isSubtitle){
-					modNum = (ytVideo._height - chl[1].channelBreadth);
-				}
-				else{
-					modNum = FLY_SUBTITLE_REDLINE - chl[1].channelBreadth;
-				}
-				chl[0] = chl[0] % modNum + modNum;
-			}
-			cl[0] = chl[0] - 1;		//因为是底部对齐的，所以让它离开底部1个像素会比较好看
-			cl[1] = 0;	//废弃行，本来是层编号的
-			
-			trace("[_fly_channel_request]{FLY_TYPE_BOTTOM}(分配通道) cmtID=" + cmt.cmtID + ", cmttext=" + cmt.cmtText + ", cl[0] = " + cl[0]);
-						
-			break;
-			
+	/**
+	 * 确定首个开始检查的通道之后，就调用冲突查询函数，列出所有屏幕上与当前通道冲突的弹幕占用的通道以及弹幕数据
+	 */
+	do {
+		gotChannel = true;
+		conflicts = _channel_get_conflicts(curr.channel, curr.channelBreadth);
+		//trace("冲突检查结果数：" + conflicts.length);
 		
-		//默认的飘移字幕和顶部字幕的通道分配
-		default:
-		
-			//从头开始查找可用的通道，直到字幕红线为止
-			var fFlag = false;
-			//先设置查找初始数组索引，直到找到通道0为止
-			var stIndex = 0;
-			if(_fly_var_channels.length != 0){
-				//查找到非负通道，也就是非底部评论的通道
-				while(!fFlag && stIndex <= _fly_var_channels.length){
-					if(_fly_var_channels[stIndex][0] >= 0){
-						fFlag = true;
-					}
-					else{
-						stIndex++;
-					}
-				}
-				//如果到了数组末尾还找不到大于0的通道就可以从通道1开始分配
-				if(stIndex == _fly_var_channels.length){
-					fFlag = true;
-					chl[0] = 1;
-				}
-				else{
-					fFlag = false;
-				}
+		for (i = 0; i < conflicts.length; i++) {
+			/**
+			 * 见图 1.1.1
+			 */
+			if (_channel_check_conflict(curr, conflicts[i]) == false) {
+				// 没有冲突，可以继续下一个通道的检查
 			}
-
-			//循环查找可用的通道
-			while(!fFlag){
-				chl[0]++;
-				if(_fly_var_channels.length == 0){	//如果已经分配的通道数为0则可以直接分配1号通道
-					fFlag = true;
-				}
-				else{			//否则就要查找可用的通道
-					if(_fly_var_channels[stIndex][0] >= chl[0] + chl[1].channelBreadth){		//如果前通道头大于本通道尾，继续判断
-						//还要判断我们的通道尾有没有超过下一个通道的头
-						if(stIndex + 1 == _fly_var_channels.length){	//后面已经没有通道了，可以分配
-							fFlag = true;
-							
-						}
-						else if(_fly_var_channels[stIndex + 1][0] >= chl[0] + chl[1].channelBreadth){	//否则还要判断一下
-							fFlag = true;
-						}
-					}
-					if(!fFlag && lastCheckShareChannel != _fly_var_channels[stIndex][0]){	//否则，计算是否能在该通道占用者消失前使用该通道
-					/**************
-					·这里的情况比较复杂，共有4种不同的情况，其中的3中情况都有可能让两个字幕共享同一通道
-						·为方便描述，这里做个约定：当前占用通道的字幕称为“前字幕”，试图使用此通道的字幕称为“本字幕”；
-					放置字幕的TextField的左边框成为“字幕头”，右边框称为“字幕尾”
-					·（字幕都是自右向左飞行的）
-					·首先看下表
-					----------------------------------------------------------------------
-					~\	本字幕	前字幕	|	可以共享此通道的条件
-					----------------------------------------------------------------------
-					1	飞行		飞行		|前字幕尾消失前，本字幕头X坐标不能小于飞行范围的X零坐标
-					2	飞行		固定		|前字幕消失前，本字幕头X坐标不能小于前字幕尾的X坐标
-					3	固定		飞行		|本字幕出现前，前字幕尾X坐标必须小于本字幕头X坐标
-					4	固定		固定		|这种情况无论如何不能共享通道
-					----------------------------------------------------------------------
-					·下面就要分开这三种情况编写响应的代码进行判断
-					**************/
-						var ourTime:Number;	//我们字幕的头碰到左边（或碰到现有字幕右边）（或……）的时间
-						var hisTime:Number;	//他们字幕的尾碰到左边（或他们字幕消失）（或……）的时间
-						var hisAllShowedTime:Number;	//前字幕尾已经出现（即前字幕已经完全显示出来）的时间
-						var prevCmt = _fly_var_channels[stIndex];
-						switch(cmt.flyType){
-							case FLY_TYPE_FLY:
-								if(prevCmt[1].flyType == FLY_TYPE_FLY){	//第1种情况
-									//trace("情况1 stIndex=" + stIndex);
-									hisTime = prevCmt[1].deathTime;
-									ourTime = cmt.flySpeed * (FLY_STARTING_X / (txt.textWidth + FLY_STARTING_X)) + cmt.sTime;
-									hisAllShowedTime = prevCmt[1].textWidth / (FLY_STARTING_X + prevCmt[1].textWidth) * prevCmt[1].flySpeed + prevCmt[1].sTime;
-									//这里注意，这里偷懒了点。如果前字幕是一个比屏幕还长的字幕的话，可能这时候这个字幕还没有完全显示出来，
-									//这个时候如果共享通道的话，就会发生冲突
-									//现在仅仅判断前字幕是否过长，其实可以判断前字幕是否已经完全显示出来，偷懒了 = =  
-									// 本字幕头后于前字幕尾到达左边  且  前字幕长度小于屏幕长度  且  前字幕尾已出现（前字幕尾先于本字幕头出现）
-									if(ourTime >= hisTime && prevCmt[1].textWidth < FLY_STARTING_X && hisAllShowedTime < cmt.sTime){
-										fFlag = true;
-										//chl[0] += 1;
-										trace("情况1 前字幕非过长 stIndex=" + stIndex + ", fFlag=" + fFlag + ",下注vvv");
-										trace(ourTime + " >=" + hisTime + " && " + prevCmt[1].textWidth + " < " + FLY_STARTING_X
-															+ " && " + hisAllShowedTime + " < " + cmt.sTime);
-									}
-									else{
-										lastCheckShareChannel = prevCmt[0];		//这里是防止如果该通道已经共享的话，重复地与此通道中的两个字幕对比
-									}
-								}
-								else{	//第2种情况
-									hisTime = prevCmt[1].deathTime;
-									ourTime = ((FLY_STARTING_X - prevCmt[1].textWidth) / 2) / (txt.textWidth + FLY_STARTING_X) * cmt.flySpeed + cmt.sTime;
-									if(ourTime > hisTime){
-										fFlag = true;
-									}
-								}
-								break;
-							case FLY_TYPE_TOP:
-								if(prevCmt[1].flyType == FLY_TYPE_FLY){		//第3种情况
-									//			（						本字幕空隙      +	本字幕长度	  +	前字幕长度）			/	(前字幕总长）
-									hisTime = ((FLY_STARTING_X - txt.textWidth) / 2 + chl[1].textWidth + prevCmt[1].textWidth) / (prevCmt[1].textWidth + FLY_STARTING_X);
-									hisTime = hisTime * prevCmt[1].flySpeed + prevCmt[1].sTime;
-									ourTime = chl[1].sTime;
-									if(ourTime > hisTime){
-										fFlag = true;
-									}
-									else{
-										lastCheckShareChannel = prevCmt[0];
-									}
-								}
-
-								break;
-						}
-					}
-									
-					//如果还是不行的话就只能死翘翘了，继续查找吧
-					if(!fFlag){
-						chl[0] = _fly_var_channels[stIndex][0] + _fly_var_channels[stIndex][1].channelBreadth + 1;
-						stIndex++;
-
-						if(stIndex >= _fly_var_channels.length){
-							fFlag = true;
-						}
-					}
-
-				}
+			else if (_fly_delete(conflicts[i].cmtID) == true) {
+				// 删除成功，所以不算冲突，可以继续下一个通道的检查
 			}
-			//超过字幕红线的必须从头取模，另加一个小偏移量，避免通道ID完全一致
-			debugstr += ", chl[0]=" + chl[0] + ", breadth=" + chl[1].channelBreadth;
-			/*if(chl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
-				chl[0] = chl[0] % FLY_SUBTITLE_RANGE + Math.round(chl[0] % FLY_SUBTITLE_RANGE);
-			}*/
-			
-			
-			//！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-			//弱弱地尝试一下仅允许偶数通道，懒得去查找是哪里造成了本来可以使用同一通道的两个字幕使用了相差为1的两个通道
-			//虽然是很XXOO的解决方法，极有可能失败，但还是试一下吧
-			//--不行，++才行
-			if(chl[0] / 2 == Math.round(chl[0] / 2)){
-				chl[0]++;
+			else {
+				// 存在冲突，不能分配这个通道
+				ret[0] = conflicts[i].channel + conflicts[i].channelBreadth + 1;
+				curr.channel = ret[0];
+				gotChannel = false;
+				//trace("设置通道到 " + ret[0]);
+				break;
 			}
-			
-			//查找终于完毕了
-			cl[0] = chl[0];
-			
-			//超过字幕红线的必须从头取模，然后减去该字幕的带宽，去绝对值。至于为什么请看算法文档
-			if(cl[0] + chl[1].channelBreadth >= fly_subtitle_redline){
-				debugstr += ", modnum=" + Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);// - fly_subtitle_redline - chl[1].channelBreadth);
-				cl[0] = cl[0] % Math.round(fly_subtitle_redline - FLY_SUBTITLE_RANGE - chl[1].channelBreadth);
-				cl[0] = Math.abs(cl[0] - chl[1].channelBreadth);
-			}
-			
-			cl[1] = 0;		//废弃行，本来是用于层编号的
-			
-			break;
-			
-/*		case FLY_TYPE_TOP:
-			cl[0] = (ytVideo._y + chl[1].channelBreadth);
-			cl[1] = FLY_LEVEL_TOP + lvl;
-			break;
-*/
+		}
+	}
+	while (!gotChannel);
+	
+	ret[0] = _channel_do_mod(curr.channel, curr.channelBreadth, curr.flyType);
+	_fly_channel_occupy(curr);
 
+	ret[0] -= 2;
+	return ret;
+}
+
+/**
+ * 获取当前所有冲突通道
+ * 
+ * 该函数会根据（也仅仅根据）当前弹幕的通道占用信息来检查冲突，并以一个数组返回所有冲突
+ * 
+ * @param Number chl_try	欲进行冲突检查的通道
+ * @param Number breadth	欲进行冲突检查的通道宽度
+ * @return Array(channel_t)	所有冲突的通道，按通道升序排序
+ */
+function _channel_get_conflicts(r_chl, r_breadth) {
+	var ret:Array = new Array();
+	var i:Number = 0;
+	var r_bot:Number = r_chl + r_breadth;
+	
+	//trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
+	for (i = 0; i < _fly_var_channels.length && (_fly_var_channels[i].channel < r_chl + r_breadth || true); i++) {
+		var cur_chl = _fly_var_channels[i];
+		var chl_top = cur_chl.channel;
+		var chl_bot = chl_top + cur_chl.channelBreadth;
+		/**
+		 * 见图 1.2
+		 */
+		if ((chl_bot >= r_chl && chl_bot <= r_bot) ||
+			(chl_top >= r_chl && chl_top <= r_bot) ||
+			(chl_top <= r_chl && chl_bot >= r_bot))
+		{
+			//trace("　冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+			ret.push(cur_chl);
+		}
+		else {
+			//trace("不冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+		}
 	}
 	
-	
-	debugstr += ", cl[0]=" + cl[0];
-	debugstr += ", chl[0]=" + chl[0];
-	//trace("分配通道：" + debugstr);
-	
-	_fly_channel_occupy(chl);
-	
-	return cl;
+	return ret;
 }
+
+/**
+ * 弹幕申请通道冲突判断
+ * 
+ * @param channel_t curr	当前弹幕通道
+ * @param channel_t prev	目前已经存在的弹幕通道
+ * @return Boolean	是否冲突，true为发生冲突，false为没有冲突
+ */
+function _channel_check_conflict(curr:channel_t, prev:channel_t) {
+	/**
+	 * 见图 2.x
+	 * 在水平方向上判断是否有冲突，实质上顶部、底部和字幕等固定弹幕的性质都是相同的，只需要区分出飞行弹幕和其他弹幕就可以了
+	 */
+	switch (curr.flyType) {
+		case FLY_TYPE_FLY:
+			return _channel_check_conflict_fly(curr, prev);
+			break;
+		case FLY_TYPE_TOP:
+		case FLY_TYPE_BOTTOM:
+		case FLY_TYPE_SUBTITLE:
+			return _channel_check_conflict_top(curr, prev);
+			break;
+	}
+	return true;
+}
+
+
+/**
+ * 飞行弹幕通道冲突判断（水平方向）
+ * 
+ * @param 见 _channel_check_conflict 函数
+ * @return 见 _channel_check_conflict 函数
+ */
+function _channel_check_conflict_fly(curr:channel_t, prev:channel_t) {
+	var curr_left_to_area_left;		// 当前弹幕的左边缘碰到播放区域左边的片时
+	var prev_right;					// 前弹幕右边缘的水平坐标
+	var curr_left_to_prev_right;	// 当前弹幕碰到前弹幕（仅限静止弹幕）右边缘的时间
+	
+	/**
+	 * 计算方法参考 图 2.1
+	 */
+	curr_left_to_area_left = (curr.deathTime - curr.sTime) * (popsub_area_width / (curr.textWidth + popsub_area_width)) + curr.sTime;
+	prev_right = eval("popsub_" + prev.cmtID)._x + prev.textWidth;
+	curr_left_to_prev_right = (curr.deathTime - curr.sTime) * ((popsub_area_width - prev_right) / (curr.textWidth + popsub_area_width)) + curr.sTime;
+	
+	/**
+	 * 见图 2.1
+	 */
+	switch (prev.flyType) {
+		/**
+		 * 见图 2.2.1
+		 */	
+		case FLY_TYPE_FLY:
+			// 追尾
+			if (curr_left_to_area_left < prev.deathTime) return true;
+			
+			// 出不来
+			if (eval("popsub_" + prev.cmtID)._x + prev.textWidth >= popsub_area_width) return true;
+			
+			break;
+			
+		/**
+		 * 见图 2.2.2
+		 */
+		case FLY_TYPE_TOP:
+		case FLY_TYPE_BOTTOM:
+		case FLY_TYPE_SUBTITLE:
+			// 追尾
+			if (curr_left_to_prev_right < prev.deathTime) return true;
+			
+			// 出不来
+			if (prev_right > popsub_area_width) return true;
+			
+			break;
+			
+		default:
+			return true;
+			break;
+	}
+	
+	return false;
+} 
+
+/**
+ * 顶部弹幕通道冲突判断（水平方向）
+ * 
+ * @param 见 _channel_request 函数
+ * @return 见 _channel_request 函数
+ */
+function _channel_check_conflict_top(curr:channel_t, prev:channel_t) {
+	var onshow_prev_left;	// 在本弹幕出现时，前弹幕（仅限飞行类）左边缘的水平坐标
+	var onshow_prev_right;	// 在本弹幕出现时，前弹幕（仅限飞行类）右边缘的水平坐标
+	var ondel_prev_left;	// 在本弹幕消失时，前弹幕（仅限飞行类）左边缘的水平坐标
+	var ondel_prev_right;	// 在本弹幕消失时，前弹幕（仅限飞行类）右边缘的水平坐标
+	var curr_left;		// 本弹幕左边缘的水平坐标
+	var curr_right;		// 本弹幕右边缘的水平坐标
+	var prev_left;		// 前弹幕（仅限固定类）左边缘的水平坐标
+	var perv_right;		// 前弹幕（仅限固定类）右边缘的水平坐标
+	
+	/**
+	 * 计算方法见 图 2.2
+	 */
+	onshow_prev_left = popsub_area_width - (prev.textWidth + popsub_area_width) * ((curr.sTime - prev.sTime) / (prev.deathTime - prev.sTime))
+	onshow_prev_right = onshow_prev_left + prev.textWidth;
+	ondel_prev_left = popsub_area_width - (prev.textWidth + popsub_area_width) * ((curr.deathTime - prev.sTime) / (prev.deathTime - prev.sTime))
+	ondel_prev_right = ondel_prev_left + prev.textWidth;
+	curr_left = eval("popsub_" + curr.cmtID)._x;
+	curr_right = curr_left + curr.textWidth;
+	prev_left = eval("popsub_" + prev.cmtID)._x;
+	prev_right = prev_left + prev.textWidth;
+	
+	/**
+	 * 见图 2.2
+	 */
+	switch (prev.flyType) {
+		/**
+		 * 见图 2.2.1
+		 */
+		case FLY_TYPE_FLY:
+			// 不能与头区间有水平交集
+			if (!(curr_right < ondel_prev_left || curr_left > onshow_prev_left)) return true;
+			
+			// 不能与尾区间有水平交集
+			if (!(curr_right < ondel_prev_right || curr_left > onshow_prev_right)) return true;
+			
+			break;
+		
+		/**
+		 * 见图 2.2.2
+		 */
+		case FLY_TYPE_TOP:
+		case FLY_TYPE_BOTTOM:
+		case FLY_TYPE_SUBTITLE:
+			// 盖尾
+			if (curr_left >= prev_left && curr_left <= prev_right) return true;
+			
+			// 盖头
+			if (curr_right >= prev_left && curr_right <= prev_right) return true;
+			
+			// 超盖
+			if (curr_left <= prev_left && curr_right >= prev_right) return true;
+			
+			break;
+		
+		default:
+			return true;
+			break;
+	}
+	
+	return false;
+} 
+
+/**
+ * 通道取模计算
+ * 
+ * 对已经分配好的通道进行取模计算，以符合影片高度
+ * 
+ * @param Number channel	分配的通道
+ * @param Number breadth	通道占用的宽度
+ * @param Number fly_type	弹幕类型
+ * @return Number	通道计算结果
+ */
+function _channel_do_mod(channel:Number, breadth:Number, fly_type:Number) {
+	var m:Number;
+	trace("传入通道: " + channel + ", breadth=" + breadth + ", flyType=" + fly_type);
+	m = popsub_area_height - breadth;
+	m = 200;
+	
+	switch (fly_type) {
+		case FLY_TYPE_FLY:
+		case FLY_TYPE_TOP:
+			trace("判断顶部类型弹幕");
+			channel %= m;
+			break;
+		case FLY_TYPE_BOTTOM:
+		case FLY_TYPE_SUBTITLE:
+			/**
+			 * 见图 1.3
+			 */
+			m = popsub_area_height - breadth;
+			while (channel > 0) ret -= m;
+			channel = -(channel + breadth);
+			break;
+	}
+	trace("mod计算结果：" + channel);
+	return channel;
+}
+/********************************/
+/*********通道分配函数 结束********/
+/********************************/
 
 //添加新评论
 function comment_add_comment(con, attr){
@@ -661,8 +742,8 @@ function _comment_seek(tTime){
 	var delList:Array = new Array();
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		chl = _fly_var_channels[i];
-		if(tTime < chl[1].sTime || tTime > chl[1].sTime + chl[1].flySpeed){
-			delList.push(chl[1].cmtID);
+		if(tTime < chl.sTime || tTime > chl.sTime + chl.flySpeed){
+			delList.push(chl.cmtID);
 		}
 	}
 	//删除已经释放了通道的TextField对象
@@ -709,7 +790,7 @@ function _comment_show(){
 function _comment_hide(){
 	var delID:Number = 0;
 	while(_fly_var_channels.length > 0){
-		delID = _fly_var_channels[0][1].cmtID;
-		_fly_delete(delID, eval("popsub_" + delID));
+		delID = _fly_var_channels[0].cmtID;
+		_fly_delete(delID);
 	}
 }
