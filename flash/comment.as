@@ -450,6 +450,7 @@ function _channel_request(cmt:Object, txt:TextField) {
 				curr.channel = conflicts[i].channel + conflicts[i].channelBreadth + 1;
 				gotChannel = false;
 				//trace("设置通道到 " + ret[0]);
+				break;
 			}
 		}
 	}
