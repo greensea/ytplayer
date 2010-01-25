@@ -9,9 +9,10 @@
 	public var flyType:Number;
 	public var flySpeed:Number;
 	public var isSubtitle:Boolean;
-	
+	public var alignment:Number;
+		
 	function channel_t(txt:TextField, cmt:Object){
-		this.channel = 0;
+		this.channel = (cmt.channel == undefined) ? null : int(cmt.channel);
 		this.cmtID = cmt.cmtID; 
 		this.channelBreadth = cmt.fontSize + 2; 
 		this.deathTime = (cmt.sTime + cmt.flySpeed); 
@@ -20,6 +21,7 @@
 		this.sTime = cmt.sTime;
 		this.flyType = cmt.flyType;
 		this.flySpeed = cmt.flySpeed;
+		this.alignment = (cmt.alignment == undefined) ? null : cmt.alignment;
 	}
 	
 }

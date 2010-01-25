@@ -82,7 +82,9 @@ function fly_comment_push(xmlcmt){
 				fontColor:cmts[i].attributes["fontColor"],
 				fontSize:cmts[i].attributes["fontSize"],
 				flyType:cmts[i].attributes["flyType"],
-				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0) //单位：s
+				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0), //单位：s
+				channel:cmts[i].attributes["channel"],
+				alignment:cmts[i].attributes["alignment"]
 			}
 			
 			//一系列的判断
@@ -237,7 +239,6 @@ function _fly_comment_putScreen(comment){
 	}
 	
 	//请求通道，并将文本放到通道上
-	//var channel = _fly_channel_request(comment, txt);
 	var channel = _channel_request(comment, txt);
 	txt._y = channel[0];
 	//显示文本
@@ -395,14 +396,21 @@ function _fly_channel_release(cmtID){
  * @param TextField txt		已经初始化的文本域对象
  * @return Array	一维数组，r[0]表示申请到的通道，已经根据影片高度取模，可以直接显示；r[1]表示弹幕所在层
  */
-function _channel_request(cmt, txt:TextField) {
-	var ret = Array(0, 1);
+function _channel_request(cmt:Object, txt:TextField) {
+	var ret:Array = Array(0, 1);
 	var chl_try:Number;
 	var conflicts:Array;
 	var i:Number;
 	var gotChannel:Boolean;
 	var curr:channel_t = new channel_t(txt, cmt);
-	
+
+	if (curr.channel != null) {
+		_fly_channel_occupy(curr);
+		ret[0] = curr.channel;
+		
+		return ret;
+	}
+
 	/**
 	 * 特别地，对于底部类型的弹幕，其通道是从负的影片高度开始的，并且和飞行类以及顶部弹幕不冲突
 	 * 查找冲突弹幕的时候，这两种类型的弹幕就要分开处理，顶部类弹幕自然是从0号通道开始查找冲突
@@ -421,9 +429,8 @@ function _channel_request(cmt, txt:TextField) {
 	 */
 	do {
 		gotChannel = true;
-		conflicts = _channel_get_conflicts(curr.channel, curr.channelBreadth);
+		conflicts = _channel_get_conflicts(int(curr.channel), int(curr.channelBreadth));
 		//trace("冲突检查结果数：" + conflicts.length);
-		
 		for (i = 0; i < conflicts.length; i++) {
 			/**
 			 * 见图 1.1.1
@@ -436,7 +443,8 @@ function _channel_request(cmt, txt:TextField) {
 			}
 			else {
 				// 存在冲突，不能分配这个通道
-				ret[0] = conflicts[i].channel + conflicts[i].channelBreadth + 1;
+				trace("conflicts[" + i + "].channel=" + conflicts[i].channel);
+				ret[0] = conflicts[i].channel + int(conflicts[i].channelBreadth) + 1;
 				curr.channel = ret[0];
 				gotChannel = false;
 				//trace("设置通道到 " + ret[0]);
@@ -458,20 +466,21 @@ function _channel_request(cmt, txt:TextField) {
  * 
  * 该函数会根据（也仅仅根据）当前弹幕的通道占用信息来检查冲突，并以一个数组返回所有冲突
  * 
- * @param Number chl_try	欲进行冲突检查的通道
- * @param Number breadth	欲进行冲突检查的通道宽度
+ * @param Number r_chl	欲进行冲突检查的通道（r_chl = request_chl）
+ * @param Number r_breadth	欲进行冲突检查的通道宽度
  * @return Array(channel_t)	所有冲突的通道，按通道升序排序
  */
-function _channel_get_conflicts(r_chl, r_breadth) {
+function _channel_get_conflicts(r_chl:Number, r_breadth:Number) {
 	var ret:Array = new Array();
 	var i:Number = 0;
 	var r_bot:Number = r_chl + r_breadth;
 	
-	//trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
+	trace(_fly_var_channels[i].text);
+	trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
 	for (i = 0; i < _fly_var_channels.length && (_fly_var_channels[i].channel < r_chl + r_breadth || true); i++) {
-		var cur_chl = _fly_var_channels[i];
-		var chl_top = cur_chl.channel;
-		var chl_bot = chl_top + cur_chl.channelBreadth;
+		var cur_chl:channel_t = _fly_var_channels[i];
+		var chl_top:Number = int(cur_chl.channel);
+		var chl_bot:Number = int(chl_top) + int(cur_chl.channelBreadth);
 		/**
 		 * 见图 1.2
 		 */
@@ -479,11 +488,11 @@ function _channel_get_conflicts(r_chl, r_breadth) {
 			(chl_top >= r_chl && chl_top <= r_bot) ||
 			(chl_top <= r_chl && chl_bot >= r_bot))
 		{
-			//trace("　冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+			trace("　冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
 			ret.push(cur_chl);
 		}
 		else {
-			//trace("不冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+			trace("不冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
 		}
 	}
 	
@@ -523,9 +532,9 @@ function _channel_check_conflict(curr:channel_t, prev:channel_t) {
  * @return 见 _channel_check_conflict 函数
  */
 function _channel_check_conflict_fly(curr:channel_t, prev:channel_t) {
-	var curr_left_to_area_left;		// 当前弹幕的左边缘碰到播放区域左边的片时
-	var prev_right;					// 前弹幕右边缘的水平坐标
-	var curr_left_to_prev_right;	// 当前弹幕碰到前弹幕（仅限静止弹幕）右边缘的时间
+	var curr_left_to_area_left:Number;		// 当前弹幕的左边缘碰到播放区域左边的片时
+	var prev_right:Number;					// 前弹幕右边缘的水平坐标
+	var curr_left_to_prev_right:Number;	// 当前弹幕碰到前弹幕（仅限静止弹幕）右边缘的时间
 	
 	/**
 	 * 计算方法参考 图 2.1
@@ -579,14 +588,14 @@ function _channel_check_conflict_fly(curr:channel_t, prev:channel_t) {
  * @return 见 _channel_request 函数
  */
 function _channel_check_conflict_top(curr:channel_t, prev:channel_t) {
-	var onshow_prev_left;	// 在本弹幕出现时，前弹幕（仅限飞行类）左边缘的水平坐标
-	var onshow_prev_right;	// 在本弹幕出现时，前弹幕（仅限飞行类）右边缘的水平坐标
-	var ondel_prev_left;	// 在本弹幕消失时，前弹幕（仅限飞行类）左边缘的水平坐标
-	var ondel_prev_right;	// 在本弹幕消失时，前弹幕（仅限飞行类）右边缘的水平坐标
-	var curr_left;		// 本弹幕左边缘的水平坐标
-	var curr_right;		// 本弹幕右边缘的水平坐标
-	var prev_left;		// 前弹幕（仅限固定类）左边缘的水平坐标
-	var perv_right;		// 前弹幕（仅限固定类）右边缘的水平坐标
+	var onshow_prev_left:Number;	// 在本弹幕出现时，前弹幕（仅限飞行类）左边缘的水平坐标
+	var onshow_prev_right:Number;	// 在本弹幕出现时，前弹幕（仅限飞行类）右边缘的水平坐标
+	var ondel_prev_left:Number;	// 在本弹幕消失时，前弹幕（仅限飞行类）左边缘的水平坐标
+	var ondel_prev_right:Number;	// 在本弹幕消失时，前弹幕（仅限飞行类）右边缘的水平坐标
+	var curr_left:Number;		// 本弹幕左边缘的水平坐标
+	var curr_right:Number;		// 本弹幕右边缘的水平坐标
+	var prev_left:Number;		// 前弹幕（仅限固定类）左边缘的水平坐标
+	var perv_right:Number;		// 前弹幕（仅限固定类）右边缘的水平坐标
 	
 	/**
 	 * 计算方法见 图 2.2
@@ -683,8 +692,8 @@ function _channel_do_mod(channel:Number, breadth:Number, fly_type:Number) {
 //添加新评论
 function comment_add_comment(con, attr){
 	//先查找位置和分配一个ID，顺便插入位置
-	var id = 0;
-	var insertPos = 0;
+	var id:Number = 0;
+	var insertPos:Number = 0;
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 		if(attr.sTime > fly_var_queue[i].sTime){
