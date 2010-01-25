@@ -28,6 +28,10 @@ class 邀踢动画类{
 	function _获取影片信息($页面地址){
 		//$源码 = file_get_contents("http://www.flvxz.com/getFlv.php?url=$页面地址");
 		//必须发送Cookie才能获取地址了
+		/**
+		 * 不用了，改用 flvcd.com 的服务
+		 */
+		/*
 		$xmlhttp = new com('MSXML2.ServerXMLHTTP');
 		$xmlhttp->open('GET', 'http://www.flvxz.net', false);
 		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
@@ -36,18 +40,27 @@ class 邀踢动画类{
 		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
 		$xmlhttp->send();
 		$源码 = $xmlhttp->responseText;
+		*/
 		
+		/**
+		 * 从 flvcd.com 获取地址
+		 */
+		$curl = curl_init();
+		curl_setopt_array($curl , array(CURLOPT_URL => 'http://www.flvcd.com/parse.php?kw=' . urlencode($页面地址),
+										CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
+										CURLOPT_RETURNTRANSFER => 1
+										));
+		$源码 = curl_exec($curl);
+		
+		$正规式 = '/<N>(.+?)[\r\n][.\r\n\s\S]+?<U>(.+?)[\r\n]+/mi';
 		$结果 = array();
+		
+		if( preg_match($正规式, $源码, $结果) == 0 ) return null;
 
-		//die($源码);
-
-		//if( preg_match('/(.+)<br.+"(http.+?)"/mi', $源码, $结果) == 0 ) return null;
-		if( preg_match('/<a href=\'(http.+?)\'.+;\'>(.+?)\.flv/mi', $源码, $结果) == 0 ) return null;
-
-		$结果[1] = 哔——编码转换($结果[1]);
+		//$结果[1] = 哔——编码转换($结果[1]);
 		return array(
-					'标题' => $结果[2],
-					'地址' => $结果[1]
+					'标题' => $结果[1],
+					'地址' => $结果[2]
 					);
 	}
 	
