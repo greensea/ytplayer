@@ -31,7 +31,6 @@ var FLY_STARTING_X:Number = ytVideo._width;		//字幕初始位置：相对与影
 var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
 
 
-
 /* a1 表示评论位置， a0 表示是否飘移 */
 var fly_type:Object ={top:0x2, bottom:0x0, fly:0x3};
 /*
@@ -55,6 +54,26 @@ var popsub_area_width = ytVideo._width;
 var _comment_var_display = true;		//是否显示评论
 var _comment_user_total = 0;		//记录用户在本页面发表的评论总数
 
+var _fly_var_last_check_conflicts_channel_top:Array = Array(100);
+var _fly_var_last_check_conflicts_channel_bottom:Array = Array(100);
+
+/**
+ * 初始化工作。
+ * 这里初始化在comment.as中需要用到的数据结构
+ */
+_comment_init_last_check_conflicts_array();
+
+
+/**
+ * 初始化 _fly_var_last_check_conflicts 数组
+ * 见 特别优化 1
+ */
+function _comment_init_last_check_conflicts_array() {
+	for (var i:Number = 0; i < 100; i++) {
+		_fly_var_last_check_conflicts_channel_top[i] = 0;
+		_fly_var_last_check_conflicts_channel_bottom[i] = -popsub_area_height;
+	}
+}
 
 
 //获取字幕源XML
@@ -66,7 +85,7 @@ function fly_comment_push(xmlcmt){
 		if(cmts[i].nodeName){
 			// 弹幕过滤
 			//if (cmts[i].attributes["flyType"] != "bottom") continue;
-			//if (cmts[i].attributes["flyType"] == "bottom") cmts[i].attributes["flyType"] = "top";
+			//if (cmts[i].attributes["flyType"] != "bottom") cmts[i].attributes["flyType"] = "bottom";
 			// 增加到播放器评论表格
 			dgrComments.addItem({
 				片时:_sec2disTime(cmts[i].attributes["playTime"]),
@@ -308,12 +327,17 @@ function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
  * @return Boolean	若删除成功，返回true，删除失败或未删除则返回false，找不到此弹幕或文本域也返回false
  */
 function _fly_delete(cmtID:Number, txt:TextField){
-	var cmt = null;
+	var cmt:channel_t = null;
 	if (txt == null) txt = eval("popsub_" + cmtID);
 	
 	//判断当前的播放时间是否已经到达了应该删除的时间，这是为了防止影片暂停的时候留言被删除
 	//但如果是不显示弹幕的话则不管三七二十一一律删除
 	// 另外，为了配合通道选择时试图删除当前弹幕获取最低通道，所以也应该判断这个弹幕是否可删除
+	/**
+	 * 这里有一个性能瓶颈，在弹幕很多的时候线性查找将消耗很多时间，这大大降低了_fly_delete函数的效率
+	 * 而_fly_delete又调用得比较频繁，这就会导致整个flash死掉
+	 * 找个什么时候来弄掉这个瓶颈
+	 */
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(_fly_var_channels[i].cmtID == cmtID){
 			cmt = _fly_var_channels[i];
@@ -334,6 +358,15 @@ function _fly_delete(cmtID:Number, txt:TextField){
 		return false;
 	}
 	else{
+		/**
+		 * 重置在 _channel_request 函数中使用的 last_check_conflicts_channel 变量
+		 * 见 特别优化 1
+		 */
+		_comment_set_last_check_conflicts_channel(cmt.channelBreadth, cmt.flyType);
+		
+		/**
+		 * 正式删除，包括删除对应的文本域和释放通道
+		 */
 		//——【删除】
 		trace(getTimer() + ",[_fly_delete](删除弹幕) cmtID=" + cmtID + ", txt=" + txt.text);
 		//释放通道
@@ -418,14 +451,17 @@ function _channel_request(cmt:Object, txt:TextField) {
 	 * 特别地，对于底部类型的弹幕，其通道是从负的影片高度开始的，并且和飞行类以及顶部弹幕不冲突
 	 * 查找冲突弹幕的时候，这两种类型的弹幕就要分开处理，顶部类弹幕自然是从0号通道开始查找冲突
 	 * 而底部类弹幕则是从负的影片高度通道开始查找冲突
+	 * 
+	 * 另：见 特别优化 1
 	 */
 	if (cmt.flyType == FLY_TYPE_FLY || cmt.flyType == FLY_TYPE_TOP) {
 		curr.channel = 0;
+		if (curr.channelBreadth < 100) curr.channel = _fly_var_last_check_conflicts_channel_top[curr.channelBreadth];
 	}
 	else {
 		curr.channel = -popsub_area_height;
-	}
-	
+		if (curr.channelBreadth < 100) curr.channel = _fly_var_last_check_conflicts_channel_bottom[curr.channelBreadth];
+	}	
 	
 	/**
 	 * 确定首个开始检查的通道之后，就调用冲突查询函数，列出所有屏幕上与当前通道冲突的弹幕占用的通道以及弹幕数据
@@ -433,7 +469,7 @@ function _channel_request(cmt:Object, txt:TextField) {
 	do {
 		gotChannel = true;
 		conflicts = _channel_get_conflicts(curr.channel, curr.channelBreadth);
-		//trace("冲突检查结果数：" + conflicts.length);
+		trace("冲突检查结果数：" + conflicts.length);
 		for (i = 0; i < conflicts.length; i++) {
 			/**
 			 * 见图 1.1.1
@@ -446,13 +482,18 @@ function _channel_request(cmt:Object, txt:TextField) {
 			}
 			else {
 				// 存在冲突，不能分配这个通道
-				trace("conflicts[" + i + "].channel=" + conflicts[i].channel);
+				//trace("conflicts[" + i + "].channel=" + conflicts[i].channel);
 				curr.channel = conflicts[i].channel + conflicts[i].channelBreadth + 1;
 				gotChannel = false;
 				//trace("设置通道到 " + ret[0]);
 				break;
 			}
 		}
+		
+		/**
+		 * 见 特别优化 1
+		 */
+		_comment_set_last_check_conflicts_channel(curr.channelBreadth, curr.flyType, curr.channel);
 	}
 	while (!gotChannel);
 	
@@ -480,8 +521,8 @@ function _channel_get_conflicts(r_chl:Number, r_breadth:Number) {
 	var i:Number = 0;
 	var r_bot:Number = r_chl + r_breadth;
 	
-	trace(_fly_var_channels[i].text);
-	trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
+	//trace(_fly_var_channels[i].text);
+	//trace("(" + i + ") " + _fly_var_channels[i].cmtID + " <  " + r_chl  + "+" + r_breadth);
 	for (i = 0; i < _fly_var_channels.length && (_fly_var_channels[i].channel < r_chl + r_breadth || true); i++) {
 		cur_chl = _fly_var_channels[i];
 		chl_top = cur_chl.channel;
@@ -493,11 +534,11 @@ function _channel_get_conflicts(r_chl:Number, r_breadth:Number) {
 			(chl_top >= r_chl && chl_top <= r_bot) ||
 			(chl_top <= r_chl && chl_bot >= r_bot))
 		{
-			trace("　冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+			//trace("　冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
 			ret.push(cur_chl);
 		}
 		else {
-			trace("不冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
+			//trace("不冲突：r_chl=" + r_chl + ", r_bot=" + r_bot + ", chl_top=" + chl_top + ", chl_bot=" + chl_bot);
 		}
 	}
 	
@@ -696,6 +737,28 @@ function _channel_do_mod(channel:Number, breadth:Number, fly_type:Number) {
 /*********通道分配函数 结束********/
 /********************************/
 
+/**
+ * 设置 last_check_conflicts_channel 标志数组
+ * 
+ * channel:Number 参数是可选的，如果不传入此参数，则重置对应的数组元素，否则将对应的数组元素设置到channel值
+ * 见 特别优化 1
+ */
+function _comment_set_last_check_conflicts_channel(breadth:Number, fly_type:Number, channel:Number) {
+	if (breadth >= 100) return;
+	
+	switch (fly_type) {
+		case FLY_TYPE_FLY:
+		case FLY_TYPE_TOP:
+			_fly_var_last_check_conflicts_channel_top[curr.channelBreadth] = (channel != null) ? channel : 0 ;
+			break;
+		case FLY_TYPE_BOTTOM:
+		case FLY_TYPE_SUBTITLE:
+			_fly_var_last_check_conflicts_channel_bottom[curr.channelBreadth] = (channel != null) ? channel : -popsub_area_height;
+			break;
+	}
+}
+
+
 //添加新评论
 function comment_add_comment(con, attr){
 	//先查找位置和分配一个ID，顺便插入位置
@@ -746,7 +809,7 @@ function _comment_seek(tTime){
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
 	//这里应该找到这个时间之前还不应该消失字幕
 	for(var i = 0; i < fly_var_queue.length; i++){
-		trace("_comment_seek查找判断：i=" + i + ", tTime=" + tTime + ", sTime=" + fly_var_queue[i].sTime + ", flySpeed=" + fly_var_queue[i].flySpeed);
+		//trace("_comment_seek查找判断：i=" + i + ", tTime=" + tTime + ", sTime=" + fly_var_queue[i].sTime + ", flySpeed=" + fly_var_queue[i].flySpeed);
 		if(tTime <= (fly_var_queue[i].sTime + fly_var_queue[i].flySpeed)){
 			if(fly_var_indexNext >= fly_var_queueLength) needRestart = true;
 			fly_var_indexNext = i;
