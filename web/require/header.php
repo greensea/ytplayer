@@ -3,11 +3,11 @@ error_reporting(~E_ALL & ~E_NOTICE);
 //error_reporting(E_ALL | E_NOTICE);
 date_default_timezone_set('Asia/Shanghai');
 
-require_once('db_ms.php');
+require_once('db_mysql.php');
 $数据库 = new 数据库达梦类;
-$数据库->用户名 = 'ytdh';
-$数据库->密码 = 'mszfnfsosf*ytdh12';
-$数据库->模式 = '邀踢动画';
+$数据库->用户名 = 'ytp';
+$数据库->密码 = 'McTAmnWvCD62RcFz';
+$数据库->模式 = 'ytp';
 
 require_once('类文件/邀踢动画。常量.php');
 require_once('类文件/邀踢动画类.php');
