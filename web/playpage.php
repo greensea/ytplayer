@@ -18,7 +18,7 @@ $动画编号 = intval($动画);
 //			(SELECT COUNT(编号) FROM 弹幕 WHERE 动画编号=动画.编号) AS 弹幕数 
 //			FROM 动画 WHERE 编号=$动画编号";
 $语句 = "SELECT sourcepage,postername,addtime,hits,title,description,
-			(SELECT COUNT(id) FROM popsub WHERE id=video.id) AS popsub_count
+			(SELECT COUNT(id) FROM popsub WHERE id=video.id) + (SELECT COUNT(id) FROM group_popsub WHERE groupid IN (SELECT id FROM popsub_group WHERE videoid=$动画编号)) AS popsub_count
 			FROM video WHERE id=$动画编号";
 $结果 = $数据库->查询($语句);
 if(!$结果) $邀踢动画->错误("编号为 $动画编号 的动画不存在，可能已经被和谐了");
