@@ -106,7 +106,7 @@ class 邀踢动画类{
 		$缩略图 = $数据库->查询语句转义($缩略图);
 		$当前时间 = time();
 
-		if(!strpos($源页面, '.youku.') && !strpos($源页面, '.tudou.')) $标题 = $标题;	//新浪的标题是utf-8编码的
+		if(strpos($源页面, '.youku.') || strpos($源页面, '.tudou.')) $标题 = iconv('gb2312', 'utf-8', $标题);	//土豆和优酷的标题是国标2312的
 
 		//$语句 = "INSERT INTO 动画(源页面,地址,标题,说明,缩略图路径,用户编号) VALUES ( '$源页面', '$地址', '$标题', '$说明', '$缩略图', " . $this->用户->编号 . ")";
 		$语句 = "INSERT INTO video(sourcepage,sourcefile,title,description,thumbnail,addtime,userid) VALUES ( '$源页面', '$地址', '$标题', '$说明', '$缩略图', $当前时间, " . $this->用户->编号 . ")";
@@ -141,6 +141,10 @@ function 哔——编码转换($str){
 
 function ytp_file_get_contents($file) {
 	return file_get_contents(iconv('utf-8', 'gb2312', $file));
+}
+
+function ytp_move_uploaded_file($tmp, $to) {
+	return move_uploaded_file($tmp, iconv('utf-8', 'gb2312', $to));
 }
 
 function _u2utf82gb($c){

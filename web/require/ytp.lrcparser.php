@@ -4,7 +4,7 @@
  * @return 解析结果，以二维数组形式保存。各个字段名称分别为：片时，速度，内容
  */
 function 歌词文件分析($歌词路径){
-	$content = ytp_file_get_contents(realpath($歌词路径));
+	$content = ytp_file_get_contents($歌词路径);
 	if ($content == '') return NULL;
 
 	// 规格化歌词的分行，并删除所有空行
