@@ -1,16 +1,16 @@
 <?php
-error_reporting(~E_ALL & ~E_NOTICE);
-//error_reporting(E_ALL | E_NOTICE);
+//error_reporting(~E_ALL & ~E_NOTICE);
+error_reporting(E_ALL | E_NOTICE);
 date_default_timezone_set('Asia/Shanghai');
 
 require_once('db_mysql.php');
-$Êý¾Ý¿â = new Êý¾Ý¿â´ïÃÎÀà;
-$Êý¾Ý¿â->ÓÃ»§Ãû = 'ytp';
-$Êý¾Ý¿â->ÃÜÂë = 'McTAmnWvCD62RcFz';
-$Êý¾Ý¿â->Ä£Ê½ = 'ytp';
+$æ•°æ®åº“ = new æ•°æ®åº“ç­æ„æ€ç±»;
+$æ•°æ®åº“->ç”¨æˆ·å = 'ytp';
+$æ•°æ®åº“->å¯†ç  = 'McTAmnWvCD62RcFz';
+$æ•°æ®åº“->æ¨¡å¼ = 'ytp';
 
-require_once('ÀàÎÄ¼þ/ÑûÌß¶¯»­¡£³£Á¿.php');
-require_once('ÀàÎÄ¼þ/ÑûÌß¶¯»­Àà.php');
-$ÑûÌß¶¯»­ = new ÑûÌß¶¯»­Àà;
+require_once('require/ytp.constant.php');
+require_once('require/ytp.class.php');
+$é‚€è¸¢åŠ¨ç”» = new é‚€è¸¢åŠ¨ç”»ç±»;
 
 ?>

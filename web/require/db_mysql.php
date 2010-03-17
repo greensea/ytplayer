@@ -1,42 +1,44 @@
 <?php
 require('db.php');
 
-class Êı¾İ¿â´ïÃÎÀà extends Êı¾İ¿âÀà{
-	private $Á¬½Ó¶ÔÏó;
+class æ•°æ®åº“ç­æ„æ€ç±» extends æ•°æ®åº“ç±»{
+	private $è¿æ¥å¯¹è±¡;
 
-	public function Á¬½Ó(){
-		if($this->ÊÇ·ñÁ¬½Ó) return true;
+	public function è¿æ¥(){
+		if($this->æ˜¯å¦è¿æ¥) return true;
 
-		mysql_connect('localhost', $this->ÓÃ»§Ãû, $this->ÃÜÂë);
-		mysql_select_db($this->Ä£Ê½);
+		mysql_connect('localhost', $this->ç”¨æˆ·å, $this->å¯†ç );
+		mysql_select_db($this->æ¨¡å¼);
+		mysql_query('SET NAMES utf8');
 		
-		$this->ÊÇ·ñÁ¬½Ó = true;
+		$this->æ˜¯å¦è¿æ¥ = true;
 	}
 	
-	public function ²éÑ¯($Óï¾ä){
-		if(!$this->ÊÇ·ñÁ¬½Ó) $this->Á¬½Ó();
+	public function æŸ¥è¯¢($è¯­å¥){
+		if(!$this->æ˜¯å¦è¿æ¥) $this->è¿æ¥();
 
-		$½á¹û = mysql_query($Óï¾ä) or die(mysql_error() . "<strong>$Óï¾ä</strong>");
-		$this->Ó°ÏìĞĞÊı = @mysql_affected_rows($½á¹û);
+		$ç»“æœ = mysql_query($è¯­å¥) or die(mysql_error() . "<strong>$è¯­å¥</strong>");
+		$this->å½±å“è¡Œæ•° = @mysql_affected_rows($ç»“æœ);
 		
-		//Èç¹û²»ÊÇSELECTÖ®ÀàµÄÓï¾ä¾Í²»ÓÃ·µ»Ø½á¹û¼¯ÁË
-		if($this->Ó°ÏìĞĞÊı > 0 && mysql_num_rows($½á¹û) == 0) return $this->Ó°ÏìĞĞÊı;
+		//å¦‚æœä¸æ˜¯SELECTä¹‹ç±»çš„è¯­å¥å°±ä¸ç”¨è¿”å›ç»“æœé›†äº†
+		if(@mysql_num_rows($ç»“æœ) == null) return $this->å½±å“è¡Œæ•°;
 
-		$·µ»Ø = array();
-		while($µ¥ĞĞ½á¹û = mysql_fetch_array($½á¹û)){
-			array_push($·µ»Ø, $µ¥ĞĞ½á¹û);
+		$è¿”å› = array();
+
+		while($å•è¡Œç»“æœ = mysql_fetch_array($ç»“æœ)){
+			array_push($è¿”å›, $å•è¡Œç»“æœ);
 		}
 
-		return count($·µ»Ø) == 0 ? null : $·µ»Ø;
+		return count($è¿”å›) == 0 ? null : $è¿”å›;
 	}
 
-	public function ¶Ï¿ª(){
+	public function æ–­å¼€(){
 		mysql_close();
-		$this->ÊÇ·ñÁ¬½Ó = false;
+		$this->æ˜¯å¦è¿æ¥ = false;
 	}
 
-	public function ²éÑ¯Óï¾ä×ªÒå($Óï¾ä){
-		return str_replace("'", "''", $Óï¾ä);
+	public function æŸ¥è¯¢è¯­å¥è½¬ä¹‰($è¯­å¥){
+		return str_replace("'", "''", $è¯­å¥);
 	}
 
 }

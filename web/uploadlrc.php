@@ -1,13 +1,13 @@
 	<fieldset class="GeCiShangChuan">
-		<legend>�������ϴ�lrc����ļ���Ϊ�ײ���Ļ</legend>
+		<legend>给动画上传lrc歌词文件作为底部字幕</legend>
 		<form enctype="multipart/form-data" action="uploadlrc.php?id=<?php echo $_GET['id'];?>" method="POST">
 			
-			<div>�����ϵ�еĵ�Ļ����һ�����֣�<input type="text" name="groupname" value="" /></div>
-			<div>��Ļ��ɫ��������ʮ�����Ƶ���ɫֵ��<input type="text" name="color" value="ffffff" /></div>
-			<div>ѡ��LRC����ļ���<input name="lrc" type="file" /></div>
+			<div>给这个系列的弹幕决定一个名字：<input type="text" name="groupname" value="" /></div>
+			<div>弹幕颜色，请填入十六进制的颜色值：<input type="text" name="color" value="ffffff" /></div>
+			<div>选择LRC歌词文件：<input name="lrc" type="file" /></div>
 			
 			<input type="hidden" name="id" value="<?php echo $_GET['id'];?>" />
-			<input type="submit" value="�ϴ��ļ�" />
+			<input type="submit" value="上传文件" />
 		</form>
 	</fieldset>
 
@@ -19,8 +19,8 @@
 
 if (isset($_GET['id']) == 0) die('');
 
-require_once('���ļ�/ͷ.php');
-require_once('���ļ�/���߶���������ļ�����.php');
+require_once('类文件/头.php');
+require_once('类文件/邀踢动画。歌词文件分析.php');
 
 
 $id = intval($_GET['id']);
@@ -30,7 +30,7 @@ $color = hexdec(str_replace('#', '', $color));
 
 $savepath = realpath('./lrcs') . '/';
 
-// ȷ������·��
+// 确定保存路径
 if (!file_exists($savepath . $_FILES['lrc']['name'])) {
 	$savepath = $savepath . $_FILES['lrc']['name'];
 }
@@ -42,32 +42,32 @@ else {
 
 move_uploaded_file($_FILES['lrc']['tmp_name'], $savepath);
 
-$savepath_s = $���ݿ�->��ѯ���ת��($savepath);
-$groupname_s = $���ݿ�->��ѯ���ת��($groupname);
+$savepath_s = $数据库->查询语句转义($savepath);
+$groupname_s = $数据库->查询语句转义($groupname);
 
-$���ݿ�->��ѯ("INSERT INTO ��Ļ���� (�������,�û����,����,�ļ���ַ)VALUES($id," .  $���߶���->�û�->��� . ",'$groupname_s','$savepath_s')");
-$result = $���ݿ�->��ѯ('SELECT MAX(���) AS m FROM ��Ļ����');
+$数据库->查询("INSERT INTO 弹幕分组 (动画编号,用户编号,组名,文件地址)VALUES($id," .  $邀踢动画->用户->编号 . ",'$groupname_s','$savepath_s')");
+$result = $数据库->查询('SELECT MAX(编号) AS m FROM 弹幕分组');
 $maxid = $result[0]['m'];
 
 $sql = '';
-$lrcs = ����ļ�����($savepath);
+$lrcs = 歌词文件分析($savepath);
 
 for ($i = 0; $i < count($lrcs); $i++) {
-	$���� = $maxid;
-	$�û���� = $���߶���->�û�->���;
-	$���� = $���ݿ�->��ѯ���ת��($lrcs[$i]['����']);
-	$Ƭʱ = $lrcs[$i]['Ƭʱ'];
-	$��С = FLY_FONTSIZE_SMALL;
-	$��ɫ = $color;
-	$ģʽ = FLY_MODE_BOTTOM;
-	$�ٶ� = $lrcs[$i]['�ٶ�'];
+	$组编号 = $maxid;
+	$用户编号 = $邀踢动画->用户->编号;
+	$内容 = $数据库->查询语句转义($lrcs[$i]['内容']);
+	$片时 = $lrcs[$i]['片时'];
+	$大小 = FLY_FONTSIZE_SMALL;
+	$颜色 = $color;
+	$模式 = FLY_MODE_BOTTOM;
+	$速度 = $lrcs[$i]['速度'];
 
-	$sql .= "INSERT INTO ���鵯Ļ(����,�û����,����,����ʱ��,�ֺ�,��ɫ,ģʽ,�ٶ�)VALUES($����,$�û����,'$����',$Ƭʱ,$��С,$��ɫ,$ģʽ,$�ٶ�);";
+	$sql .= "INSERT INTO 分组弹幕(组编号,用户编号,内容,播放时间,字号,颜色,模式,速度)VALUES($组编号,$用户编号,'$内容',$片时,$大小,$颜色,$模式,$速度);";
 }
-$���ݿ�->��ѯ($sql);
+$数据库->查询($sql);
 
 ob_clean();
-die('����ϴ��ɹ�����������' . count($lrcs) . '����Ļ');
+die('歌词上传成功，共添加了' . count($lrcs) . '条弹幕');
 
 ?>
 

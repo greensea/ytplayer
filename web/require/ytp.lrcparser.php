@@ -1,13 +1,13 @@
 <?php
 /**
- * @param $filepath ¸è´ÊÎÄ¼þÂ·¾¶
- * @return ½âÎö½á¹û£¬ÒÔ¶þÎ¬Êý×éÐÎÊ½±£´æ¡£¸÷¸ö×Ö¶ÎÃû³Æ·Ö±ðÎª£ºÆ¬Ê±£¬ËÙ¶È£¬ÄÚÈÝ
+ * @param $filepath æ­Œè¯æ–‡ä»¶è·¯å¾„
+ * @return è§£æžç»“æžœï¼Œä»¥äºŒç»´æ•°ç»„å½¢å¼ä¿å­˜ã€‚å„ä¸ªå­—æ®µåç§°åˆ†åˆ«ä¸ºï¼šç‰‡æ—¶ï¼Œé€Ÿåº¦ï¼Œå†…å®¹
  */
-function ¸è´ÊÎÄ¼þ·ÖÎö($¸è´ÊÂ·¾¶){
-	$content = file_get_contents(realpath($¸è´ÊÂ·¾¶));
+function æ­Œè¯æ–‡ä»¶åˆ†æž($æ­Œè¯è·¯å¾„){
+	$content = ytp_file_get_contents(realpath($æ­Œè¯è·¯å¾„));
 	if ($content == '') return NULL;
 
-	// ¹æ¸ñ»¯¸è´ÊµÄ·ÖÐÐ£¬²¢É¾³ýËùÓÐ¿ÕÐÐ
+	// è§„æ ¼åŒ–æ­Œè¯çš„åˆ†è¡Œï¼Œå¹¶åˆ é™¤æ‰€æœ‰ç©ºè¡Œ
 	$content = str_replace("\r\n", "\n", $content);
 	$content = str_replace("\r", "\n", $content);
 	while (stripos($content, "\n\n") !== FALSE) {
@@ -21,9 +21,9 @@ function ¸è´ÊÎÄ¼þ·ÖÎö($¸è´ÊÂ·¾¶){
 		$lineresult = lrc_analysis_line($line[$i]);
 		if ($lineresult == NULL) continue;
 		
-		$namedresult = array('Æ¬Ê±' => lrc_timestr2milli($lineresult[1]),
-							'ÄÚÈÝ' => $lineresult[2],
-							'ËÙ¶È' => 0
+		$namedresult = array('ç‰‡æ—¶' => lrc_timestr2milli($lineresult[1]),
+							'å†…å®¹' => $lineresult[2],
+							'é€Ÿåº¦' => 0
 						);
 
 		if ($lineresult !== NULL) array_push($result, $namedresult);
@@ -50,12 +50,12 @@ function lrc_analysis_line($line){
 
 function lrc_calculate_speed($res){
 	for ($i = 0; $i < count($res) - 1; $i++) {
-		$res[$i]['ËÙ¶È'] = $res[$i + 1]['Æ¬Ê±'] - $res[$i]['Æ¬Ê±'];
-		if ($res[$i]['ËÙ¶È'] <= 0) $res[$i]['ËÙ¶È'] = 3000;
+		$res[$i]['é€Ÿåº¦'] = $res[$i + 1]['ç‰‡æ—¶'] - $res[$i]['ç‰‡æ—¶'];
+		if ($res[$i]['é€Ÿåº¦'] <= 0) $res[$i]['é€Ÿåº¦'] = 3000;
 	}
 
-	// ¶ÔÓÚ×îºóÒ»¸öµ¯Ä»£¬Èç¹ûÎª¿ÕÔòÎÞÊÓ£¬·ñÔò¾Í°´ÕÕÄ¬ÈÏµÄ3Ãë
-	if ($res[$i]['ÄÚÈÝ'] != '') $res[$i]['ËÙ¶È'] = 3000;
+	// å¯¹äºŽæœ€åŽä¸€ä¸ªå¼¹å¹•ï¼Œå¦‚æžœä¸ºç©ºåˆ™æ— è§†ï¼Œå¦åˆ™å°±æŒ‰ç…§é»˜è®¤çš„3ç§’
+	if ($res[$i]['å†…å®¹'] != '') $res[$i]['é€Ÿåº¦'] = 3000;
 
 	return $res;
 }
@@ -76,7 +76,7 @@ function lrc_timestr2milli($timestr){
 function lrc_delete_emptyline($res){
 	$ret = array();
 	for ($i = 0; $i < count($res); $i++) {
-		if ($res[$i]['ÄÚÈÝ'] != '') array_push($ret, $res[$i]);
+		if ($res[$i]['å†…å®¹'] != '') array_push($ret, $res[$i]);
 	}
 
 	return $ret;

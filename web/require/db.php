@@ -1,21 +1,18 @@
 <?php
 
-class Êý¾Ý¿âÀà{
-	public $Ö÷»ú;
-	public $ÓÃ»§Ãû;
-	public $ÃÜÂë;
-	public $Ä£Ê½;
-	public $Êý¾ÝÔ´ = '';
+class æ•°æ®åº“ç±»{
+	public $ä¸»æœº;
+	public $ç”¨æˆ·å;
+	public $å¯†ç ;
+	public $æ¨¡å¼;
+	public $æ•°æ®æº = '';
 
-	protected $ÊÇ·ñÁ¬½Ó = false;
+	protected $æ˜¯å¦è¿žæŽ¥ = false;
 
-	public function ²éÑ¯($Óï¾ä){}
-	public function Á¬½Ó(){}
-	public function ¶Ï¿ª(){}
-	public function ²éÑ¯Óï¾ä×ªÒå($Óï¾ä){}
+	public function æŸ¥è¯¢($è¯­å¥){}
+	public function è¿žæŽ¥(){}
+	public function æ–­å¼€(){}
+	public function æŸ¥è¯¢è¯­å¥è½¬ä¹‰($è¯­å¥){}
 
 }
-
-
-
 ?>

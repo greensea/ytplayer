@@ -1,95 +1,96 @@
 <?php
-require_once('ÀàÎÄ¼þ/Í·.php');
+require_once('require/header.php');
 
-$¶¯»­ = $_GET['p'];
-if(is_null($¶¯»­)){
-	$ÑûÌß¶¯»­->´íÎó('ÇëÊäÈëÓ°Æ¬Ò³Ãæ»ò¶¯»­±àºÅ');
+$åŠ¨ç”» = $_GET['p'];
+if(is_null($åŠ¨ç”»)){
+	$é‚€è¸¢åŠ¨ç”»->é”™è¯¯('è¯·è¾“å…¥å½±ç‰‡é¡µé¢æˆ–åŠ¨ç”»ç¼–å·');
 }
-if(intval($¶¯»­) / pow(10, strlen($¶¯»­)) < 0.1){
-	//²»ÊÇÊý×Ö£¬²éÑ¯¸Ã¶¯»­µÄ±àºÅ
-	°´µØÖ·²éÑ¯¶¯»­(trim($¶¯»­));
+if(intval($åŠ¨ç”») / pow(10, strlen($åŠ¨ç”»)) < 0.1){
+	//ä¸æ˜¯æ•°å­—ï¼ŒæŸ¥è¯¢è¯¥åŠ¨ç”»çš„ç¼–å·
+	æŒ‰åœ°å€æŸ¥è¯¢åŠ¨ç”»(trim($åŠ¨ç”»));
 	
 }
 
 
-//¶ÁÈ¡Êý¾Ý¿â
-$¶¯»­±àºÅ = intval($¶¯»­);
-$Óï¾ä = "SELECT Ô´Ò³Ãæ,Í¶µÝÈË,Ìí¼ÓÊ±¼ä,²¥·ÅÊý,±êÌâ,ËµÃ÷,
-			(SELECT COUNT(±àºÅ) FROM µ¯Ä» WHERE ¶¯»­±àºÅ=¶¯»­.±àºÅ) AS µ¯Ä»Êý 
-			FROM ¶¯»­ WHERE ±àºÅ=$¶¯»­±àºÅ";
-$½á¹û = $Êý¾Ý¿â->²éÑ¯($Óï¾ä);
-if(!$½á¹û) $ÑûÌß¶¯»­->´íÎó("±àºÅÎª $¶¯»­±àºÅ µÄ¶¯»­²»´æÔÚ£¬¿ÉÄÜÒÑ¾­±»ºÍÐ³ÁË");
+//è¯»å–æ•°æ®åº“
+$åŠ¨ç”»ç¼–å· = intval($åŠ¨ç”»);
+//$è¯­å¥ = "SELECT æºé¡µé¢,æŠ•é€’äºº,æ·»åŠ æ—¶é—´,æ’­æ”¾æ•°,æ ‡é¢˜,è¯´æ˜Ž,
+//			(SELECT COUNT(ç¼–å·) FROM å¼¹å¹• WHERE åŠ¨ç”»ç¼–å·=åŠ¨ç”».ç¼–å·) AS å¼¹å¹•æ•° 
+//			FROM åŠ¨ç”» WHERE ç¼–å·=$åŠ¨ç”»ç¼–å·";
+$è¯­å¥ = "SELECT sourcepage,postername,addtime,hits,title,description,
+			(SELECT COUNT(id) FROM popsub WHERE id=video.id) AS popsub_count
+			FROM video WHERE id=$åŠ¨ç”»ç¼–å·";
+$ç»“æžœ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
+if(!$ç»“æžœ) $é‚€è¸¢åŠ¨ç”»->é”™è¯¯("ç¼–å·ä¸º $åŠ¨ç”»ç¼–å· çš„åŠ¨ç”»ä¸å­˜åœ¨ï¼Œå¯èƒ½å·²ç»è¢«å’Œè°äº†");
 
-//==========£¡¼òµ¥µØÔö¼Ó²¥·ÅÊý£¬Õâ¸öÒÔºóÒªÐÞ¸Ä£¬ÏÖÔÚÖ»ÊÇÎªÁËºÃ¿´
-$Óï¾ä = "UPDATE ¶¯»­ SET ²¥·ÅÊý=²¥·ÅÊý+1 WHERE ±àºÅ=$¶¯»­±àºÅ";
-$Êý¾Ý¿â->²éÑ¯($Óï¾ä);
-//==========£¡¼òµ¥µØÔö¼Ó²¥·ÅÊý£¬Õâ¸öÒÔºóÒªÐÞ¸Ä£¬ÏÖÔÚÖ»ÊÇÎªÁËºÃ¿´
+//==========ï¼ç®€å•åœ°å¢žåŠ æ’­æ”¾æ•°ï¼Œè¿™ä¸ªä»¥åŽè¦ä¿®æ”¹ï¼ŒçŽ°åœ¨åªæ˜¯ä¸ºäº†å¥½çœ‹
+$è¯­å¥ = "UPDATE video SET hits=hits+1 WHERE id=$åŠ¨ç”»ç¼–å·";
+$æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
+//==========ï¼ç®€å•åœ°å¢žåŠ æ’­æ”¾æ•°ï¼Œè¿™ä¸ªä»¥åŽè¦ä¿®æ”¹ï¼ŒçŽ°åœ¨åªæ˜¯ä¸ºäº†å¥½çœ‹
 
-$¶¯»­±êÌâ = htmlspecialchars($½á¹û[0]['±êÌâ']);
-$Í¶µÝÈË = htmlspecialchars($½á¹û[0]['Í¶µÝÈË']);
-$Í¶µÝÊ±¼ä = date('Y-n-j G:i:s', strtotime($½á¹û[0]['Ìí¼ÓÊ±¼ä']));
-$²¥·ÅÊý = $½á¹û[0]['²¥·ÅÊý'];
-$µ¯Ä»Êý = $½á¹û[0]['µ¯Ä»Êý'];
-$À´Ô´Ò³Ãæ = $Ô´Ò³Ãæ = $½á¹û[0]['Ô´Ò³Ãæ'];
+$åŠ¨ç”»æ ‡é¢˜ = htmlspecialchars($ç»“æžœ[0]['title']);
+$æŠ•é€’äºº = htmlspecialchars($ç»“æžœ[0]['postername']);
+$æŠ•é€’æ—¶é—´ = date('Y-n-j G:i:s', $ç»“æžœ[0]['addtime']);
+$æ’­æ”¾æ•° = $ç»“æžœ[0]['hits'];
+$å¼¹å¹•æ•° = $ç»“æžœ[0]['popsub_count'];
+$æ¥æºé¡µé¢ = $æºé¡µé¢ = $ç»“æžœ[0]['sourcepage'];
 
-//ÅÐ¶ÏÀ´Ô´ÍøÕ¾
-$Óï¾ä = 'SELECT ÍøÕ¾Ãû,ÓòÃû FROM Ô´ÍøÕ¾';
-$Ô´ÍøÕ¾¼¯ºÏ = $Êý¾Ý¿â->²éÑ¯($Óï¾ä);
-for($i = 0; $i < count($Ô´ÍøÕ¾¼¯ºÏ); $i++){
-	if(strpos($Ô´Ò³Ãæ, $Ô´ÍøÕ¾¼¯ºÏ[$i]['ÓòÃû'])){
-		$À´Ô´ÍøÕ¾ = $Ô´ÍøÕ¾¼¯ºÏ[$i]['ÍøÕ¾Ãû'];
+//åˆ¤æ–­æ¥æºç½‘ç«™
+$è¯­å¥ = 'SELECT sitename,domain FROM source_site';
+$æºç½‘ç«™é›†åˆ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
+for($i = 0; $i < count($æºç½‘ç«™é›†åˆ); $i++){
+	if(strpos($æºé¡µé¢, $æºç½‘ç«™é›†åˆ[$i]['domain'])){
+		$æ¥æºç½‘ç«™ = $æºç½‘ç«™é›†åˆ[$i]['sitename'];
 	}
 }
 
-echo $¶¯»­±êÌâ;
-
-Êä³öÒ³Ãæ();
+è¾“å‡ºé¡µé¢();
 
 //=========================
 
-function °´µØÖ·²éÑ¯¶¯»­($Ô´Ò³Ãæ){
-	global $ÑûÌß¶¯»­;
-	global $Êý¾Ý¿â;
+function æŒ‰åœ°å€æŸ¥è¯¢åŠ¨ç”»($æºé¡µé¢){
+	global $é‚€è¸¢åŠ¨ç”»;
+	global $æ•°æ®åº“;
 
-	$Óï¾ä = "SELECT ±àºÅ FROM ¶¯»­ WHERE Ô´Ò³Ãæ='" . $Êý¾Ý¿â->²éÑ¯Óï¾ä×ªÒå($Ô´Ò³Ãæ) . "'";
-	$½á¹û = $Êý¾Ý¿â->²éÑ¯($Óï¾ä);
+	$è¯­å¥ = "SELECT id FROM video WHERE sourcepage='" . $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($æºé¡µé¢) . "'";
+	$ç»“æžœ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
 
-	if(!$½á¹û){
-		$½á¹û = $ÑûÌß¶¯»­->ÐÂ½¨¶¯»­Êý¾Ý('', '', $Ô´Ò³Ãæ, '');
-		if(!$½á¹û) $ÑûÌß¶¯»­->´íÎó('Õâ¸öÓ°Æ¬²»ÄÜ²¥·Å');
+	if(!$ç»“æžœ){
+		$ç»“æžœ = $é‚€è¸¢åŠ¨ç”»->æ–°å»ºåŠ¨ç”»æ•°æ®('', '', $æºé¡µé¢, '');
+		if(!$ç»“æžœ) $é‚€è¸¢åŠ¨ç”»->é”™è¯¯('è¿™ä¸ªå½±ç‰‡ä¸èƒ½æ’­æ”¾');
 	}
 	else{
-		$½á¹û = $Êý¾Ý¿â->²éÑ¯($Óï¾ä);
+		$ç»“æžœ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
 	}
 
-	header('Location: /dh' . $½á¹û[0]['±àºÅ']);
+	header('Location: /dh' . $ç»“æžœ[0]['id']);
 	exit();
 }
 
 
-function Êä³öÒ³Ãæ(){
-	global $¶¯»­±àºÅ;
-	global $¶¯»­±êÌâ;
-	global $Í¶µÝÈË;
-	global $Í¶µÝÊ±¼ä;
-	global $²¥·ÅÊý;
-	global $µ¯Ä»Êý;
-	global $À´Ô´ÍøÕ¾;
-	global $À´Ô´Ò³Ãæ;
+function è¾“å‡ºé¡µé¢(){
+	global $åŠ¨ç”»ç¼–å·;
+	global $åŠ¨ç”»æ ‡é¢˜;
+	global $æŠ•é€’äºº;
+	global $æŠ•é€’æ—¶é—´;
+	global $æ’­æ”¾æ•°;
+	global $å¼¹å¹•æ•°;
+	global $æ¥æºç½‘ç«™;
+	global $æ¥æºé¡µé¢;
 
-	$Êä³ö = file_get_contents('Ä£°å/²¥·Å.html');
-	$Êä³ö = str_replace('{$¶¯»­±àºÅ}', $¶¯»­±àºÅ, $Êä³ö);
-	$Êä³ö = str_replace('{$¶¯»­±êÌâ}', $¶¯»­±êÌâ, $Êä³ö);
-	$Êä³ö = str_replace('{$Í¶µÝÈË}', $Í¶µÝÈË, $Êä³ö);
-	$Êä³ö = str_replace('{$Í¶µÝÊ±¼ä}', $Í¶µÝÊ±¼ä, $Êä³ö);
-	$Êä³ö = str_replace('{$²¥·ÅÊý}', $²¥·ÅÊý, $Êä³ö);
-	$Êä³ö = str_replace('{$µ¯Ä»Êý}', $µ¯Ä»Êý, $Êä³ö);
-	$Êä³ö = str_replace('{$À´Ô´ÍøÕ¾}', $À´Ô´ÍøÕ¾, $Êä³ö);
-	$Êä³ö = str_replace('{$À´Ô´Ò³Ãæ}', $À´Ô´Ò³Ãæ, $Êä³ö);
-	$Êä³ö = mb_convert_encoding($Êä³ö, 'utf-8', 'gbk');
-	ob_clean();
+	$è¾“å‡º = ytp_file_get_contents('æ¨¡æ¿/æ’­æ”¾.html');
+	$è¾“å‡º = str_replace('{$åŠ¨ç”»ç¼–å·}', $åŠ¨ç”»ç¼–å·, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$åŠ¨ç”»æ ‡é¢˜}', $åŠ¨ç”»æ ‡é¢˜, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$æŠ•é€’äºº}', $æŠ•é€’äºº, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$æŠ•é€’æ—¶é—´}', $æŠ•é€’æ—¶é—´, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$æ’­æ”¾æ•°}', $æ’­æ”¾æ•°, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$å¼¹å¹•æ•°}', $å¼¹å¹•æ•°, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$æ¥æºç½‘ç«™}', $æ¥æºç½‘ç«™, $è¾“å‡º);
+	$è¾“å‡º = str_replace('{$æ¥æºé¡µé¢}', $æ¥æºé¡µé¢, $è¾“å‡º);
+	//$è¾“å‡º = mb_convert_encoding($è¾“å‡º, 'utf-8', 'gbk');
+	//ob_clean();
 	//header('Content-Type: xml/xhtml; charset=gb2312');
-	echo $Êä³ö;
+	echo $è¾“å‡º;
 }
 
 ?>

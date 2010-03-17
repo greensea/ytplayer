@@ -1,52 +1,52 @@
 <?php
 require('db.php');
 
-class Êı¾İ¿â´ïÃÎÀà extends Êı¾İ¿âÀà{
-	private $Á¬½Ó¶ÔÏó;
+class æ•°æ®åº“è¾¾æ¢¦ç±» extends æ•°æ®åº“ç±»{
+	private $è¿æ¥å¯¹è±¡;
 
-	public function Á¬½Ó(){
-		if($this->ÊÇ·ñÁ¬½Ó) return true;
+	public function è¿æ¥(){
+		if($this->æ˜¯å¦è¿æ¥) return true;
 
-		if(!$this->Á¬½Ó¶ÔÏó) $this->Á¬½Ó¶ÔÏó = new com('ADODB.Connection');
-		if($this->Êı¾İÔ´ == ''){
-			$Óï¾ä = "Provider=sqloledb; User ID=$this->ÓÃ»§Ãû; Password=$this->ÃÜÂë; Initial Catalog=$this->Ä£Ê½";
+		if(!$this->è¿æ¥å¯¹è±¡) $this->è¿æ¥å¯¹è±¡ = new com('ADODB.Connection');
+		if($this->æ•°æ®æº == ''){
+			$è¯­å¥ = "Provider=sqloledb; User ID=$this->ç”¨æˆ·å; Password=$this->å¯†ç ; Initial Catalog=$this->æ¨¡å¼";
 		}
 		else{
-			$Óï¾ä = "DSN=$this->Êı¾İÔ´";
+			$è¯­å¥ = "DSN=$this->æ•°æ®æº";
 		}
-		$this->Á¬½Ó¶ÔÏó->open($Óï¾ä);
-		$this->ÊÇ·ñÁ¬½Ó = true;
+		$this->è¿æ¥å¯¹è±¡->open($è¯­å¥);
+		$this->æ˜¯å¦è¿æ¥ = true;
 	}
 	
-	public function ²éÑ¯($Óï¾ä){
-		if(!$this->ÊÇ·ñÁ¬½Ó) $this->Á¬½Ó();
-		//echo $Óï¾ä;
-		$½á¹û = $this->Á¬½Ó¶ÔÏó->execute($Óï¾ä, $this->Ó°ÏìĞĞÊı);
+	public function æŸ¥è¯¢($è¯­å¥){
+		if(!$this->æ˜¯å¦è¿æ¥) $this->è¿æ¥();
+		//echo $è¯­å¥;
+		$ç»“æœ = $this->è¿æ¥å¯¹è±¡->execute($è¯­å¥, $this->å½±å“è¡Œæ•°);
 		
-		//Èç¹û²»ÊÇSELECTÖ®ÀàµÄÓï¾ä¾Í²»ÓÃ·µ»Ø½á¹û¼¯ÁË
-		if($½á¹û->state == 0) return $this->Ó°ÏìĞĞÊı;
+		//å¦‚æœä¸æ˜¯SELECTä¹‹ç±»çš„è¯­å¥å°±ä¸ç”¨è¿”å›ç»“æœé›†äº†
+		if($ç»“æœ->state == 0) return $this->å½±å“è¡Œæ•°;
 
-		$·µ»Ø = array();
-		while(!$½á¹û->eof){
-			$¼üÃû = $Öµ = array();
-			for($i = 0; $i < $½á¹û->fields->count; $i++){
-				array_push($¼üÃû, $½á¹û->fields[$i]->name);
-				array_push($Öµ, $½á¹û->fields[$i]->value);
+		$è¿”å› = array();
+		while(!$ç»“æœ->eof){
+			$é”®å = $å€¼ = array();
+			for($i = 0; $i < $ç»“æœ->fields->count; $i++){
+				array_push($é”®å, $ç»“æœ->fields[$i]->name);
+				array_push($å€¼, $ç»“æœ->fields[$i]->value);
 			}
-			array_push($·µ»Ø, array_combine($¼üÃû, $Öµ));
-			$½á¹û->MoveNext();
+			array_push($è¿”å›, array_combine($é”®å, $å€¼));
+			$ç»“æœ->MoveNext();
 		}
 
-		return count($·µ»Ø) == 0 ? null : $·µ»Ø;
+		return count($è¿”å›) == 0 ? null : $è¿”å›;
 	}
 
-	public function ¶Ï¿ª(){
-		$this->Á¬½Ó¶ÔÏó->close();
-		$this->ÊÇ·ñÁ¬½Ó = false;
+	public function æ–­å¼€(){
+		$this->è¿æ¥å¯¹è±¡->close();
+		$this->æ˜¯å¦è¿æ¥ = false;
 	}
 
-	public function ²éÑ¯Óï¾ä×ªÒå($Óï¾ä){
-		return str_replace("'", "''", $Óï¾ä);
+	public function æŸ¥è¯¢è¯­å¥è½¬ä¹‰($è¯­å¥){
+		return str_replace("'", "''", $è¯­å¥);
 	}
 
 }

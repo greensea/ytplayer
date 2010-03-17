@@ -1,138 +1,148 @@
 <?php
 
-class ÑûÌß¶¯»­Àà{
-	public $ÓÃ»§;
+class é‚€è¸¢åŠ¨ç”»ç±»{
+	public $ç”¨æˆ·;
 
 	function __construct(){
-		require('ÑûÌß¶¯»­¡£ÓÃ»§Àà.php');
-		$this->ÓÃ»§ = new ÑûÌß¶¯»­¡£ÓÃ»§Àà;
+		require('ytp.user.php');
+		$this->ç”¨æˆ· = new é‚€è¸¢åŠ¨ç”»ã€‚ç”¨æˆ·ç±»;
 	}
 
-	function ±£´æµ¯Ä»($¶¯»­±àºÅ, $ÄÚÈİ, $ÓÃ»§±àºÅ, $Æ¬Ê±, $ÑÕÉ«, $Ä£Ê½, $´óĞ¡){
-		global $Êı¾İ¿â;
+	function ä¿å­˜å¼¹å¹•($åŠ¨ç”»ç¼–å·, $å†…å®¹, $ç”¨æˆ·ç¼–å·, $ç‰‡æ—¶, $é¢œè‰², $æ¨¡å¼, $å¤§å°){
+		global $æ•°æ®åº“;
 
-		$¶¯»­±àºÅ = intval($¶¯»­±àºÅ);
-		$ÄÚÈİ = $Êı¾İ¿â->²éÑ¯Óï¾ä×ªÒå(mb_convert_encoding($ÄÚÈİ, 'gbk', 'utf-8'));
-		$ÓÃ»§±àºÅ = intval($ÓÃ»§±àºÅ);
-		$Æ¬Ê± = intval($Æ¬Ê±);
-		$ÑÕÉ« = intval($ÑÕÉ«);
-		$Ä£Ê½ = intval($Ä£Ê½);
-		$´óĞ¡ = intval($´óĞ¡);
-		$ËÙ¶È = intval($ËÙ¶È);
-		if(!$ËÙ¶È) $ËÙ¶È = FLY_SPEED_DEFAULT;
+		$åŠ¨ç”»ç¼–å· = intval($åŠ¨ç”»ç¼–å·);
+		$å†…å®¹ = $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($å†…å®¹);
+		$ç”¨æˆ·ç¼–å· = intval($ç”¨æˆ·ç¼–å·);
+		$ç‰‡æ—¶ = intval($ç‰‡æ—¶);
+		$é¢œè‰² = intval($é¢œè‰²);
+		$æ¨¡å¼ = intval($æ¨¡å¼);
+		$å¤§å° = intval($å¤§å°);
+		$é€Ÿåº¦ = intval($é€Ÿåº¦);
+		$å½“å‰æ—¶é—´ = time();
+		if(!$é€Ÿåº¦) $é€Ÿåº¦ = FLY_SPEED_DEFAULT;
 
-		$Óï¾ä = "INSERT INTO µ¯Ä»(¶¯»­±àºÅ,ÓÃ»§±àºÅ,ÄÚÈİ,²¥·ÅÊ±¼ä,×ÖºÅ,ÑÕÉ«,Ä£Ê½,ËÙ¶È)VALUES($¶¯»­±àºÅ,$ÓÃ»§±àºÅ,'$ÄÚÈİ',$Æ¬Ê±,$´óĞ¡,$ÑÕÉ«,$Ä£Ê½,$ËÙ¶È)";
-		$Êı¾İ¿â->²éÑ¯($Óï¾ä);
+		//$è¯­å¥ = "INSERT INTO å¼¹å¹•(åŠ¨ç”»ç¼–å·,ç”¨æˆ·ç¼–å·,å†…å®¹,æ’­æ”¾æ—¶é—´,å­—å·,é¢œè‰²,æ¨¡å¼,é€Ÿåº¦)VALUES($åŠ¨ç”»ç¼–å·,$ç”¨æˆ·ç¼–å·,'$å†…å®¹',$ç‰‡æ—¶,$å¤§å°,$é¢œè‰²,$æ¨¡å¼,$é€Ÿåº¦)";
+		$è¯­å¥ = "INSERT INTO popsub(videoid,userid,content,playtime,fontsize,color,flymode,speed,popsubtime)VALUES($åŠ¨ç”»ç¼–å·,$ç”¨æˆ·ç¼–å·,'$å†…å®¹',$ç‰‡æ—¶,$å¤§å°,$é¢œè‰²,$æ¨¡å¼,$é€Ÿåº¦,$å½“å‰æ—¶é—´)";
+		$æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
 	}
 
-	function _»ñÈ¡Ó°Æ¬ĞÅÏ¢($Ò³ÃæµØÖ·){
-		//$Ô´Âë = file_get_contents("http://www.flvxz.com/getFlv.php?url=$Ò³ÃæµØÖ·");
-		//±ØĞë·¢ËÍCookie²ÅÄÜ»ñÈ¡µØÖ·ÁË
+	function _è·å–å½±ç‰‡ä¿¡æ¯($é¡µé¢åœ°å€){
+		//$æºç  = ytp_file_get_contents("http://www.flvxz.com/getFlv.php?url=$é¡µé¢åœ°å€");
+		//å¿…é¡»å‘é€Cookieæ‰èƒ½è·å–åœ°å€äº†
 		/**
-		 * ²»ÓÃÁË£¬¸ÄÓÃ flvcd.com µÄ·şÎñ
+		 * ä¸ç”¨äº†ï¼Œæ”¹ç”¨ flvcd.com çš„æœåŠ¡
 		 */
 		/*
 		$xmlhttp = new com('MSXML2.ServerXMLHTTP');
 		$xmlhttp->open('GET', 'http://www.flvxz.net', false);
 		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
 		$xmlhttp->send();
-		$xmlhttp->open('GET', "http://www.flvxz.net/getFlv.php?url=$Ò³ÃæµØÖ·", false);
+		$xmlhttp->open('GET', "http://www.flvxz.net/getFlv.php?url=$é¡µé¢åœ°å€", false);
 		$xmlhttp->setRequestHeader('Referer', 'http://www.flvxz.com/');
 		$xmlhttp->send();
-		$Ô´Âë = $xmlhttp->responseText;
+		$æºç  = $xmlhttp->responseText;
 		*/
 		
 		/**
-		 * ´Ó flvcd.com »ñÈ¡µØÖ·
+		 * ä» flvcd.com è·å–åœ°å€
 		 */
 		$curl = curl_init();
-		curl_setopt_array($curl , array(CURLOPT_URL => 'http://www.flvcd.com/parse.php?kw=' . urlencode($Ò³ÃæµØÖ·),
+		curl_setopt_array($curl , array(CURLOPT_URL => 'http://www.flvcd.com/parse.php?kw=' . urlencode($é¡µé¢åœ°å€),
 										CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
 										CURLOPT_RETURNTRANSFER => 1
 										));
-		$Ô´Âë = curl_exec($curl);
+		$æºç  = curl_exec($curl);
 		
-		$Õı¹æÊ½ = '/<N>(.+?)[\r\n][.\r\n\s\S]+?<U>(.+?)[\r\n]+/mi';
-		$½á¹û = array();
+		$æ­£è§„å¼ = '/<N>(.+?)[\r\n][.\r\n\s\S]+?<U>(.+?)[\r\n]+/mi';
+		$ç»“æœ = array();
 		
-		if( preg_match($Õı¹æÊ½, $Ô´Âë, $½á¹û) == 0 ) return null;
+		if( preg_match($æ­£è§„å¼, $æºç , $ç»“æœ) == 0 ) return null;
 
-		//$½á¹û[1] = ßÙ¡ª¡ª±àÂë×ª»»($½á¹û[1]);
+		//$ç»“æœ[1] = å“”â€”â€”ç¼–ç è½¬æ¢($ç»“æœ[1]);
 		return array(
-					'±êÌâ' => $½á¹û[1],
-					'µØÖ·' => $½á¹û[2]
+					'æ ‡é¢˜' => $ç»“æœ[1],
+					'åœ°å€' => $ç»“æœ[2]
 					);
 	}
 	
-	function _»ñÈ¡4sharedÓ°Æ¬ĞÅÏ¢($Ò³ÃæµØÖ·) {
+	function _è·å–4sharedå½±ç‰‡ä¿¡æ¯($é¡µé¢åœ°å€) {
 		$curl = curl_init();
-		curl_setopt_array($curl, array( CURLOPT_URL => $Ò³ÃæµØÖ·,
+		curl_setopt_array($curl, array( CURLOPT_URL => $é¡µé¢åœ°å€,
 										CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
 										CURLOPT_RETURNTRANSFER => 1
 								));
-		$Ô´Âë = curl_exec($curl);
+		$æºç  = curl_exec($curl);
 		
-		$µØÖ·Õı¹æÊ½ = '/\.swf\?file=(.+?)"/mi';
-		$±êÌâÕı¹æÊ½ = '/<meta name="title" content="(.+?)" \/>/mi';
+		$åœ°å€æ­£è§„å¼ = '/\.swf\?file=(.+?)"/mi';
+		$æ ‡é¢˜æ­£è§„å¼ = '/<meta name="title" content="(.+?)" \/>/mi';
 		
-		if (preg_match($µØÖ·Õı¹æÊ½, $Ô´Âë, $µØÖ·½á¹û) == 0) return null;
-		if (preg_match($±êÌâÕı¹æÊ½, $Ô´Âë, $±êÌâ½á¹û) == 0) return null;
+		if (preg_match($åœ°å€æ­£è§„å¼, $æºç , $åœ°å€ç»“æœ) == 0) return null;
+		if (preg_match($æ ‡é¢˜æ­£è§„å¼, $æºç , $æ ‡é¢˜ç»“æœ) == 0) return null;
 
 		return array(
-					'±êÌâ' => $±êÌâ½á¹û[1],
-					'µØÖ·' => $µØÖ·½á¹û[1]
+					'æ ‡é¢˜' => $æ ‡é¢˜ç»“æœ[1],
+					'åœ°å€' => $åœ°å€ç»“æœ[1]
 					);
 		}
 	
-	public function ĞÂ½¨¶¯»­Êı¾İ($±êÌâ, $ËµÃ÷, $Ô´Ò³Ãæ, $ËõÂÔÍ¼){
-		global $Êı¾İ¿â;
+	public function æ–°å»ºåŠ¨ç”»æ•°æ®($æ ‡é¢˜, $è¯´æ˜, $æºé¡µé¢, $ç¼©ç•¥å›¾){
+		global $æ•°æ®åº“;
 		
-		if (stripos($Ô´Ò³Ãæ, '4shared', 0) === FALSE) {
-			$Ó°Æ¬ĞÅÏ¢ = $this->_»ñÈ¡Ó°Æ¬ĞÅÏ¢($Ô´Ò³Ãæ);
+		if (stripos($æºé¡µé¢, '4shared', 0) === FALSE) {
+			$å½±ç‰‡ä¿¡æ¯ = $this->_è·å–å½±ç‰‡ä¿¡æ¯($æºé¡µé¢);
 		}
 		else {
-			$Ó°Æ¬ĞÅÏ¢ = $this->_»ñÈ¡4sharedÓ°Æ¬ĞÅÏ¢($Ô´Ò³Ãæ);
+			$å½±ç‰‡ä¿¡æ¯ = $this->_è·å–4sharedå½±ç‰‡ä¿¡æ¯($æºé¡µé¢);
 		}
-		if(!$Ó°Æ¬ĞÅÏ¢) return false;
+		if(!$å½±ç‰‡ä¿¡æ¯) return false;
 
-		$µØÖ· = $Ó°Æ¬ĞÅÏ¢['µØÖ·'];
-		if($±êÌâ == '') $±êÌâ = $Ó°Æ¬ĞÅÏ¢['±êÌâ'];
+		$åœ°å€ = $å½±ç‰‡ä¿¡æ¯['åœ°å€'];
+		if($æ ‡é¢˜ == '') $æ ‡é¢˜ = $å½±ç‰‡ä¿¡æ¯['æ ‡é¢˜'];
 
-		$ËµÃ÷ = $Êı¾İ¿â->²éÑ¯Óï¾ä×ªÒå($ËµÃ÷);
-		$µØÖ· = $Êı¾İ¿â->²éÑ¯Óï¾ä×ªÒå($µØÖ·);
-		$±êÌâ = $Êı¾İ¿â->²éÑ¯Óï¾ä×ªÒå($±êÌâ);
-		$ËõÂÔÍ¼ = $Êı¾İ¿â->²éÑ¯Óï¾ä×ªÒå($ËõÂÔÍ¼);
+		$è¯´æ˜ = $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($è¯´æ˜);
+		$åœ°å€ = $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($åœ°å€);
+		$æ ‡é¢˜ = $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($æ ‡é¢˜);
+		$ç¼©ç•¥å›¾ = $æ•°æ®åº“->æŸ¥è¯¢è¯­å¥è½¬ä¹‰($ç¼©ç•¥å›¾);
+		$å½“å‰æ—¶é—´ = time();
 
-		if(!strpos($Ô´Ò³Ãæ, '.youku.') && !strpos($Ô´Ò³Ãæ, '.tudou.')) $±êÌâ = mb_convert_encoding($±êÌâ, 'gbk', 'utf-8');	//ĞÂÀËµÄ±êÌâÊÇutf-8±àÂëµÄ
+		if(!strpos($æºé¡µé¢, '.youku.') && !strpos($æºé¡µé¢, '.tudou.')) $æ ‡é¢˜ = $æ ‡é¢˜;	//æ–°æµªçš„æ ‡é¢˜æ˜¯utf-8ç¼–ç çš„
 
-		$Óï¾ä = "INSERT INTO ¶¯»­(Ô´Ò³Ãæ,µØÖ·,±êÌâ,ËµÃ÷,ËõÂÔÍ¼Â·¾¶,ÓÃ»§±àºÅ) VALUES ( '$Ô´Ò³Ãæ', '$µØÖ·', '$±êÌâ', '$ËµÃ÷', '$ËõÂÔÍ¼', " . $this->ÓÃ»§->±àºÅ . ")";
+		//$è¯­å¥ = "INSERT INTO åŠ¨ç”»(æºé¡µé¢,åœ°å€,æ ‡é¢˜,è¯´æ˜,ç¼©ç•¥å›¾è·¯å¾„,ç”¨æˆ·ç¼–å·) VALUES ( '$æºé¡µé¢', '$åœ°å€', '$æ ‡é¢˜', '$è¯´æ˜', '$ç¼©ç•¥å›¾', " . $this->ç”¨æˆ·->ç¼–å· . ")";
+		$è¯­å¥ = "INSERT INTO video(sourcepage,sourcefile,title,description,thumbnail,addtime,userid) VALUES ( '$æºé¡µé¢', '$åœ°å€', '$æ ‡é¢˜', '$è¯´æ˜', '$ç¼©ç•¥å›¾', $å½“å‰æ—¶é—´, " . $this->ç”¨æˆ·->ç¼–å· . ")";
 
-		$Êı¾İ¿â->²éÑ¯($Óï¾ä);
+		$æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
 
-		//Èç¹ûÊÇĞÂÔö¼ÓµÄ¶¯»­£¬¾Í·µ»ØĞÂÔöµÄ±àºÅ
-		$Óï¾ä = 'SELECT MAX(±àºÅ) AS ±àºÅ FROM ¶¯»­';
-		$½á¹û = $Êı¾İ¿â->²éÑ¯($Óï¾ä);
-		return $½á¹û;
+		//å¦‚æœæ˜¯æ–°å¢åŠ çš„åŠ¨ç”»ï¼Œå°±è¿”å›æ–°å¢çš„ç¼–å·
+		$è¯­å¥ = 'SELECT MAX(id) AS id FROM video';
+		$ç»“æœ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
+		$ç»“æœ['ç¼–å·'] = $ç»“æœ['id'];
+		return $ç»“æœ;
 	}
 
-	public function ´íÎó($ĞÅÏ¢){
+	public function é”™è¯¯($ä¿¡æ¯){
 		ob_clean();
-		$Êä³ö = file_get_contents('Ä£°å/´íÎó.xml');
-		$Êä³ö = str_replace('{$´íÎóĞÅÏ¢}', htmlspecialchars($ĞÅÏ¢), $Êä³ö);
+		$è¾“å‡º = ytp_file_get_contents('æ¨¡æ¿/é”™è¯¯.xml');
+		$è¾“å‡º = str_replace('{$é”™è¯¯ä¿¡æ¯}', htmlspecialchars($ä¿¡æ¯), $è¾“å‡º);
 		header('Content-Type: text/xml; charset=utf-8');
-		echo mb_convert_encoding($Êä³ö, 'utf-8', 'gb2312');
+		echo $è¾“å‡º;
 		exit();
 	}
 }
 
 
-function ßÙ¡ª¡ª±àÂë×ª»»($str){
-	//ºËĞÄ´úÂëÀ´Ô´£ºhttp://blog.csdn.net/leinchu/archive/2008/02/27/2124810.aspx
+function å“”â€”â€”ç¼–ç è½¬æ¢($str){
+	//æ ¸å¿ƒä»£ç æ¥æºï¼šhttp://blog.csdn.net/leinchu/archive/2008/02/27/2124810.aspx
 	$str = preg_replace("|&#([0-9]{1,5});|", "\"._u2utf82gb(\\1).\"", $str);
 	$str = "\$str=\"$str\";";
 	eval($str);
 	return  $str;
 }
+
+function ytp_file_get_contents($file) {
+	return file_get_contents(iconv('utf-8', 'gb2312', $file));
+}
+
 function _u2utf82gb($c){
     $str="";
     if ($c < 0x80) {

@@ -1,43 +1,43 @@
 <?php
-require_once("ÀàÎÄ¼ş/Í·.php");
+require_once("require/header.php");
 
-//»ñÈ¡´«»ØÀ´µÄÊı¾İ
+//è·å–ä¼ å›æ¥çš„æ•°æ®
 
-$ÄÚÈİ = $_GET['content'];
-$×ÖÌå = intval($_GET['fontsize']);
-$ÑÕÉ« = $_GET['color'];
-$Ä£Ê½ = $_GET['mode'];
-$Æ¬Ê± = $_GET['playtime'];
-$¶¯»­±àºÅ = $_GET['id'];
+$å†…å®¹ = $_GET['content'];
+$å­—ä½“ = intval($_GET['fontsize']);
+$é¢œè‰² = $_GET['color'];
+$æ¨¡å¼ = $_GET['mode'];
+$ç‰‡æ—¶ = $_GET['playtime'];
+$åŠ¨ç”»ç¼–å· = $_GET['id'];
 
-$¶¯»­±àºÅ = intval($¶¯»­±àºÅ);
+$åŠ¨ç”»ç¼–å· = intval($åŠ¨ç”»ç¼–å·);
 
-if($ÄÚÈİ == '') ´íÎó½áÊø('ÄÚÈİÎª¿Õ');
-if($Æ¬Ê± == '') ´íÎó½áÊø('Æ¬Ê±Îª¿Õ');
+if($å†…å®¹ == '') é”™è¯¯ç»“æŸ('å†…å®¹ä¸ºç©º');
+if($ç‰‡æ—¶ == '') é”™è¯¯ç»“æŸ('ç‰‡æ—¶ä¸ºç©º');
 
-if( $×ÖÌå != FLY_FONTSIZE_BIG &&
-	$×ÖÌå != FLY_FONTSIZE_NORMAL &&
-	$×ÖÌå != FLY_FONTSIZE_SMALL		){
-		$×ÖÌå = FLY_FONTSIZE_DEFAULT;
+if( $å­—ä½“ != FLY_FONTSIZE_BIG &&
+	$å­—ä½“ != FLY_FONTSIZE_NORMAL &&
+	$å­—ä½“ != FLY_FONTSIZE_SMALL		){
+		$å­—ä½“ = FLY_FONTSIZE_DEFAULT;
 }
-$Ä£Ê½ = intval($Ä£Ê½);
-if( $Ä£Ê½ != FLY_MODE_BOTTOM &&
-	$Ä£Ê½ != FLY_MODE_TOP &&
-	$Ä£Ê½ != FLY_MODE_SUBTITLE	){
-		$Ä£Ê½ = FLY_MODE_DEFAULT;
+$æ¨¡å¼ = intval($æ¨¡å¼);
+if( $æ¨¡å¼ != FLY_MODE_BOTTOM &&
+	$æ¨¡å¼ != FLY_MODE_TOP &&
+	$æ¨¡å¼ != FLY_MODE_SUBTITLE	){
+		$æ¨¡å¼ = FLY_MODE_DEFAULT;
 }
-if($ÑÕÉ« == '') $ÑÕÉ« = 0xffffff;
+if($é¢œè‰² == '') $é¢œè‰² = 0xffffff;
 
-//ÅĞ¶Ï¶¯»­ÊÇ·ñ´æÔÚ»òÔÊĞíÆÀÂÛ
-$Óï¾ä = "SELECT ±àºÅ FROM ¶¯»­ WHERE ±àºÅ=$¶¯»­±àºÅ";
-$½á¹û = $Êı¾İ¿â->²éÑ¯($Óï¾ä);
-if(!$½á¹û) ´íÎó½áÊø('ÎŞ´Ë¶¯»­');
+//åˆ¤æ–­åŠ¨ç”»æ˜¯å¦å­˜åœ¨æˆ–å…è®¸è¯„è®º
+$è¯­å¥ = "SELECT id FROM video WHERE id=$åŠ¨ç”»ç¼–å·";
+$ç»“æœ = $æ•°æ®åº“->æŸ¥è¯¢($è¯­å¥);
+if(!$ç»“æœ) é”™è¯¯ç»“æŸ('æ— æ­¤åŠ¨ç”»');
 
-$ÑûÌß¶¯»­->±£´æµ¯Ä»($¶¯»­±àºÅ, $ÄÚÈİ, $ÑûÌß¶¯»­->ÓÃ»§->±àºÅ, $Æ¬Ê±, $ÑÕÉ«, $Ä£Ê½, $×ÖÌå);
-die('<message>µ¯Ä»³É¹¦</message>');
+$é‚€è¸¢åŠ¨ç”»->ä¿å­˜å¼¹å¹•($åŠ¨ç”»ç¼–å·, $å†…å®¹, $é‚€è¸¢åŠ¨ç”»->ç”¨æˆ·->ç¼–å·, $ç‰‡æ—¶, $é¢œè‰², $æ¨¡å¼, $å­—ä½“);
+die('<message>å¼¹å¹•æˆåŠŸ</message>');
 
-function ´íÎó½áÊø($ÏûÏ¢){
-	die('<error>' . htmlspecialchars($ÏûÏ¢) . '</error>');
+function é”™è¯¯ç»“æŸ($æ¶ˆæ¯){
+	die('<error>' . htmlspecialchars($æ¶ˆæ¯) . '</error>');
 }
 
 
