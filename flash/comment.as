@@ -30,7 +30,6 @@ var FLY_SUBTITLE_RANGE:Number = FLY_FONTSIZE_SUBTITLE * FLY_SUBTITLE_LINES;		//�
 var FLY_STARTING_X:Number = ytVideo._width;		//字幕初始位置：相对与影片
 var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
 
-
 /* a1 表示评论位置， a0 表示是否飘移 */
 var fly_type:Object ={top:0x2, bottom:0x0, fly:0x3};
 /*
@@ -75,6 +74,11 @@ function _comment_init_last_check_conflicts_array() {
 	}
 }
 
+/**
+ * 用于保存从cmtID到channel_t的引用数组，这样可以加快根据cmtID查找channel_t的速度
+ * 见 特别优化 2
+ */
+var _fly_var_cmtid_to_channel_t:Array = new Array();
 
 //获取字幕源XML
 function fly_comment_push(xmlcmt){	
@@ -334,16 +338,10 @@ function _fly_delete(cmtID:Number, txt:TextField){
 	//但如果是不显示弹幕的话则不管三七二十一一律删除
 	// 另外，为了配合通道选择时试图删除当前弹幕获取最低通道，所以也应该判断这个弹幕是否可删除
 	/**
-	 * 这里有一个性能瓶颈，在弹幕很多的时候线性查找将消耗很多时间，这大大降低了_fly_delete函数的效率
-	 * 而_fly_delete又调用得比较频繁，这就会导致整个flash死掉
-	 * 找个什么时候来弄掉这个瓶颈
+	 * 见 特别优化 2
 	 */
-	for(var i = 0; i < _fly_var_channels.length; i++){
-		if(_fly_var_channels[i].cmtID == cmtID){
-			cmt = _fly_var_channels[i];
-			i = _fly_var_channels.length;
-		}
-	}
+	cmt = _fly_var_cmtid_to_channel_t[cmtID];
+
 	var leaveTime = cmt.sTime + cmt.flySpeed - _video_get_time();
 	trace("[fly_delete]删除判断：leaveTime = " + cmt.sTime + " + " + cmt.flySpeed + " - " + _video_get_time() + ", rTime - nsTime = " + (_video_get_time() - ns.time));
 	trace("[_fly_delete]删除判断：leaveTime=" + leaveTime + ", cmt.flySpeed=" + cmt.flySpeed + ", _comment_var_display=" + _comment_var_display);
@@ -380,6 +378,11 @@ function _fly_delete(cmtID:Number, txt:TextField){
 
 //内部 通道占用
 function _fly_channel_occupy(chl){
+	/**
+	 * 见 特别优化 2
+	 */
+	_fly_var_cmtid_to_channel_t[chl.cmtID] = chl;
+	
 	//如果数组空则直接push进去
 	if(_fly_var_channels.length == 0){
 		_fly_var_channels.push(chl);
@@ -400,11 +403,16 @@ function _fly_channel_occupy(chl){
 //内部 通道释放
 function _fly_channel_release(cmtID){
 	for(var i = 0; i < _fly_var_channels.length; i++){
-		if(_fly_var_channels[i].cmtID == cmtID){
+		if(_fly_var_channels[i].cmtID == cmtID){			
 			_fly_var_channels.splice(i, 1);
 			break;
 		}
 	}
+	
+	/**
+	 * 见 特别优化 1
+	 */
+	_fly_var_cmtid_to_channel_t[cmtID] = undefined;
 }		
 
 
@@ -497,7 +505,8 @@ function _channel_request(cmt:Object, txt:TextField) {
 	}
 	while (!gotChannel);
 	
-	ret[0] = _channel_do_mod(curr.channel, curr.channelBreadth, curr.flyType);
+	//ret[0] = _channel_do_mod(curr.channel, curr.channelBreadth, curr.flyType);
+	ret[0] = Math.abs(curr.channel) % 400;
 	_fly_channel_occupy(curr);
 
 	ret[0] -= 2;
@@ -758,6 +767,49 @@ function _comment_set_last_check_conflicts_channel(breadth:Number, fly_type:Numb
 	}
 }
 
+/**
+ * 根据cmtID查找通道索引（二分法）
+ * 
+ * 根据channel参数，使用二分法进行查找，以加快查找速度
+ * 
+ * @param Number cmtID	欲查找的弹幕编号
+ * @param Number channel	对应弹幕分配到的原始通道
+ * @return Number	查询结果在 _fly_var_channels 数组中的索引值
+ */
+function _channel_get_index_by_cmtID(cmtID:Number, channel:Number) {
+	var ret:Number;
+	var i:Number;
+	
+	if (_fly_var_channels.length == 0) return null;
+	
+	ret = Math.floor((_fly_var_channels.length - 1) / 2);
+	
+	while (ret > 0 && ret < _fly_var_channels.length) {
+		if (channel > _fly_var_channels[ret].channel) {
+			ret = Math.floor(ret / 2);
+		}
+		else if (channel < _fly_var_channels[ret].channel) {
+			ret = Math.ceil((ret + _fly_var_channels.length) / 2);
+		}
+		else {
+			break;
+		}
+	}
+	
+	i = ret;
+	while (i >= 0 && _fly_var_channels[i].channel == channel) {
+		if (_fly_var_channels[i].cmtID == cmtID) return i;
+		i--;
+	}
+	
+	i = ret;
+	while (i < _fly_var_channels.length && _fly_var_channels[i].channel == channel) {
+		if (_fly_var_channels[i].cmtID == cmtID) return i;
+		i++;
+	}
+	
+	return _fly_var_channels[ret].cmtID == cmtID ? ret : null;	
+}
 
 //添加新评论
 function comment_add_comment(con, attr){
