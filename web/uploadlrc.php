@@ -17,6 +17,23 @@
 			</div>
 			<div>选择LRC歌词文件：<input name="lrc" type="file" /></div>
 			
+			<fieldset>
+				<legend>高级选项</legend>
+				<div>
+					歌词时间轴偏移（毫秒）：
+					<input type="text" name="lyric_offset" value="0" />
+					正数为延迟，负数为提前
+				</div>
+				<div>
+					提前显示歌词时间（毫秒）：
+					<input type="text" name="prefix_fill_time" value="0" />
+				</div>
+				<div>
+					延迟歌词消失时间（毫秒）：
+					<input type="text" name="last_fill_time" value="0" />
+				</div>
+			</fieldset>
+			
 			<input type="hidden" name="id" value="<?php echo $_GET['id'];?>" />
 			<input type="submit" value="上传文件" />
 		</form>
@@ -52,6 +69,10 @@ $groupname = $_POST['groupname'];
 $color = $_POST['color'];
 $color = hexdec(str_replace('#', '', $color));
 
+$扩展头时间 = isset($_POST['prefix_fill_time']) ? $_POST['prefix_fill_time'] : 0;
+$扩展尾时间 = isset($_POST['last_fill_time']) ? $_POST['last_fill_time'] : 0;
+$时间轴偏移 = isset($_POST['lyric_offset']) ? $_POST['lyric_offset'] : 0;
+
 $savepath = realpath('./lrcs') . '/';
 
 // 确定保存路径
@@ -86,6 +107,9 @@ for ($i = 0; $i < count($lrcs); $i++) {
 	$模式 = FLY_MODE_BOTTOM;
 	$速度 = $lrcs[$i]['速度'];
 	$当前时间 = time();
+
+	$片时 = $片时 + $时间轴偏移 - $扩展头时间;
+	$速度 = $速度 + $扩展尾时间 + $扩展头时间;
 
 	$sql = "INSERT INTO group_popsub(groupid,userid,content,playtime,fontsize,color,flymode,speed,popsubtime)VALUES($组编号,$用户编号,'$内容',$片时,$大小,$颜色,$模式,$速度,$当前时间)";
 	$数据库->查询($sql);
