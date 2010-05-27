@@ -66,7 +66,7 @@ class 邀踢动画类{
 					);
 	}
 	
-	function _获取4shared影片信息($页面地址) {
+	function _获取4shared影片信息($页面地址) {		
 		$curl = curl_init();
 		curl_setopt_array($curl, array( CURLOPT_URL => $页面地址,
 										CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
@@ -84,16 +84,41 @@ class 邀踢动画类{
 					'标题' => $标题结果[1],
 					'地址' => $地址结果[1]
 					);
-		}
+	}
+	
+	function _获取sina影片信息($页面地址) {
+		preg_match('/b\/(\d+)/mi', $页面地址, $vid);
+
+		$curl = curl_init();
+		curl_setopt_array($curl, array( CURLOPT_URL => 'http://v.iask.com/v_play.php?vid=' . $vid[1],
+										CURLOPT_USERAGENT => $_SERVER['HTTP_USER_AGENT'],
+										CURLOPT_RETURNTRANSFER => 1
+								));
+		$源码 = curl_exec($curl);
+
+		$地址正规式 = '/<url><\!\[CDATA\[(.+)\]\]><\/url>/mi';
+		$标题正规式 = '/<vname><\!\[CDATA\[(.+)\]\]><\/vname>/mi';
+		
+		if (preg_match($地址正规式, $源码, $地址结果) == 0) return null;
+		if (preg_match($标题正规式, $源码, $标题结果) == 0) return null;
+
+		return array(
+					'标题' => $标题结果[1],
+					'地址' => $地址结果[1]
+					);
+	}
 	
 	public function 新建动画数据($标题, $说明, $源页面, $缩略图){
 		global $数据库;
 		
-		if (stripos($源页面, '4shared', 0) === FALSE) {
-			$影片信息 = $this->_获取影片信息($源页面);
+		if (stripos($源页面, '4shared', 0) !== FALSE) {
+			$影片信息 = $this->_获取4shared影片信息($源页面);
+		}
+		else if (stripos($源页面, 'sina.com.cn', 0) !== FALSE) {
+			$影片信息 = $this->_获取sina影片信息($源页面);
 		}
 		else {
-			$影片信息 = $this->_获取4shared影片信息($源页面);
+			$影片信息 = $this->_获取影片信息($源页面);
 		}
 		if(!$影片信息) return false;
 
