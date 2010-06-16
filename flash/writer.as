@@ -10,6 +10,7 @@ var _writer_var_commentmode = FLY_TYPE_FLY;
 var _writer_var_issubtitle = false;
 var _writer_submit_timeout_waiter = 0;
 var _writer_xml:XML = new XML();
+var _writer_popsubs_sent_by_me = new Array();
 
 function writer_submit(){
 	var t = _level0.commentWriter.txtWriterInput;
@@ -55,11 +56,16 @@ function writer_send(con, attr){
 	_level0.commentWriter.txtWriterInput.editable = false;
 	_level0.commentWriter.btnWriterSubmit.enabled = false;
 	_level0.commentWriter.btnWriterSubmit.label = "提交中...";
+	
+	video_refresh_comment();	//发送前获取一次最新的弹幕
 	_writer_xml.load(url);
+	
+	_writer_popsubs_sent_by_me[con] = 1;
 	trace(url);
 }
 
 _writer_xml.onLoad = function(){
+	video_refresh_comment();	//发送后再次获取一次最新弹幕
 	clearTimeout(_writer_submit_timeout_waiter);
 	tip_add(this);
 	_level0.commentWriter.txtWriterInput.text = "";

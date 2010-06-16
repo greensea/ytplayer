@@ -14,6 +14,7 @@ $可扩展标记语言模板 = ytp_file_get_contents('模板/闪弹幕数据.xml
 //获取动画数据
 $是否重定位 = isset($_GET['relocate']) ? ($_GET['relocate'] == 1) : false;
 $动画编号 = intval($_GET['id']);
+$时间线 = isset($_GET['timeline']) ? $_GET['timeline'] : 0;
 
 //读弹幕和动画数据
 if(!$动画编号){	//根据源页面
@@ -42,9 +43,9 @@ $语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模�
 			SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号,通道,位置 FROM 分组弹幕 WHERE 组编号 IN (SELECT 编号 FROM 弹幕分组 WHERE 动画编号=$动画编号)
 			ORDER BY 播放时间 ASC";
 $语句一 = "SELECT hits,title,description,thumbnail,sourcefile,sourcepage FROM video WHERE id=$动画编号";
-$语句二 = "SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM popsub WHERE videoid=$动画编号
+$语句二 = "SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM popsub WHERE videoid=$动画编号 AND popsubtime>$时间线
 			UNION
-			SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM group_popsub WHERE groupid IN (SELECT id FROM popsub_group WHERE videoid=$动画编号)
+			SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM group_popsub WHERE groupid IN (SELECT id FROM popsub_group WHERE videoid=$动画编号 AND popsubtime>$时间线)
 			ORDER BY playtime ASC";
 
 if(!$动画数组) $动画数组 = $数据库->查询($语句一);
@@ -64,6 +65,7 @@ if($是否重定位){
 
 //构建弹幕数组的XML
 for($i = 0; $i < count($弹幕数组); $i++){
+	if ($弹幕数组[$i]['id'] == 0) break;
 	//$弹幕数组[$i]['评论时间'] = strtotime($弹幕数组[$i]['评论时间']);
 	$评论时间 = $弹幕数组[$i]['popsubtime'];
 	$速度 = $弹幕数组[$i]['speed'];

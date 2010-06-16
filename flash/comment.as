@@ -51,6 +51,7 @@ var popsub_area_height = ytVideo._height;
 var popsub_area_width = ytVideo._width;
 
 var _comment_var_display = true;		//是否显示评论
+var _comment_var_last_timeline = 0;
 var _comment_user_total = 0;		//记录用户在本页面发表的评论总数
 
 var _fly_var_last_check_conflicts_channel_top:Array = Array(100);
@@ -111,6 +112,9 @@ function fly_comment_push(xmlcmt){
 			}
 			
 			//一系列的判断
+			if (_comment_var_last_timeline < cmts[i].attributes["commentTime"]) {
+				_comment_var_last_timeline = cmts[i].attributes["commentTime"];
+			}
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
 			switch(newCmt.fontSize){
@@ -145,6 +149,7 @@ function fly_comment_push(xmlcmt){
 	dgrComments.getColumnAt(2).width = 150;
 	
 	fly_comment_new();
+	setInterval(video_refresh_comment, VIDEO_REFRESH_COMMENT_INTERVAL);
 }
 
 
@@ -839,7 +844,7 @@ function comment_add_comment(con, attr){
 	dgrComments.addItemAt(0, {
 		片时:_sec2disTime(attr.sTime),
 		内容:con, 
-		评论时间:_date2date(new Date())
+		评论时间:_timestamp2date(attr.commentTime)
 	});
 	
 	//偷懒……直接压到 fly_var_indexNext 这个位置去，然后就不用 _comment_seek 了

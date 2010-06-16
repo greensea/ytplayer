@@ -24,7 +24,7 @@ function video_init(){
 		video_querystring_p = parseInt(_root.b);
 	}
 	if(!_root.b) video_querystring_p = 1;	//默认的视频编号，调试的时候可以改这个为指定的视频编号
-	
+		
 	var url = URL_PREFIX + "playinfo.php?relocate=0&";
 	if(typeof(video_querystring_p) == "number"){
 		url += "id=" + video_querystring_p;
@@ -61,6 +61,89 @@ function video_init(){
 		//启动播放
 		main();
 		video_var_relocate_waiter = setTimeout(video_relocate, VIDEO_RELOCATE_WAITTIME * 1000);
+	}
+}
+
+function video_refresh_comment() {
+	var url = URL_PREFIX + "playinfo.php?relocate=0&";
+	if(typeof(video_querystring_p) == "number"){
+		url += "id=" + video_querystring_p;
+	}
+	else{
+		url += "source=" + video_querystring_p;
+	}
+	url += "&timeline=" + _comment_var_last_timeline;
+	trace(url);
+	
+	// 获取弹幕信息
+	var xmlvideo = new XML();
+	xmlvideo.ignoreWhitespace = true;
+	xmlvideo.load(url);
+	xmlvideo.onLoad = function(){
+		//先判断是否错误
+		if(xml_getElementByTagName(this, "ytPlayer") == undefined){
+			tip_add("无法加载附加弹幕信息");
+			return false;
+		}
+		var e = xml_getElementByTagName(this, "error");
+		if(e){
+			tip_add("错误：" + e.childNodes[0].nodeValue);
+			return false;
+		}
+
+		//附加新的弹幕
+		//fly_comment_push(this);
+		var cmts = xml_getElementByTagName(this, "comments").childNodes;
+		for (i = 0; i < cmts.length; i++) {
+			if (cmts[i].nodeName) {
+				// 不要显示自己的弹幕
+				if (_writer_popsubs_sent_by_me[cmts[i].lastChild.nodeValue] == 1) break;
+				
+				var newCmt = Array(cmts[i].lastChild.nodeValue, {fontSize:cmts[i].attributes["fontSize"], 
+								 fontColor:cmts[i].attributes["fontColor"],
+								 flyType:cmts[i].attributes["flyType"],
+								 sTime:cmts[i].attributes["playTime"],
+								 flySpeed:cmts[i].attributes["flySpeed"] / 1000,
+								 isSubtitle:cmts[i].attributes["isSubtitle"],
+								 commentTime:(cmts[i].attributes["commentTime"])
+								});
+				
+				// 一系列的判断
+				if (_comment_var_last_timeline < newCmt.commentTime) {
+					_comment_var_last_timeline = newCmt.commentTime;
+				}
+				
+				if(newCmt[1].fontColor == "") newCmt[1].fontColor = FLY_FONTCOLOR_DEFAULT;
+				if(newCmt[1].flyType == "") newCmt[1].flyType = FLY_TYPE_FLY;
+				switch(newCmt[1].fontSize){
+					case "14":
+						newCmt[1].fontSize = FLY_FONTSIZE_SMALL;
+						break;
+					case "26":
+						newCmt[1].fontSize = FLY_FONTSIZE_BIG;
+						break;
+					default:
+						newCmt[1].fontSize = FLY_FONTSIZE_NORMAL;
+						break;
+				}
+				switch(newCmt[1].flyType){
+					case "bottom":
+						newCmt[1].flyType = FLY_TYPE_BOTTOM;
+						break;
+					case "top":
+						newCmt[1].flyType = FLY_TYPE_TOP;
+						break;
+					default:
+						newCmt[1].flyType = FLY_TYPE_FLY;
+						break;
+				}
+				
+				if (newCmt[1].commentTime > _comment_var_last_timeline) {
+					_comment_var_last_timeline = newCmt[1].commentTime;
+				}
+				comment_add_comment(newCmt[0], newCmt[1]);
+			}
+		}
 	}
 }
 
