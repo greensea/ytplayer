@@ -27,7 +27,24 @@ class 邀踢动画类{
 		$数据库->查询($语句);
 	}
 
+	function _获取影片信息_flvcd($页面地址) {
+		$str = file_get_contents('http://www.flvcd.com/parse.php?format=&kw=' . urlencode($页面地址));
+		$str = iconv('gb2312', 'utf-8', $str);
+
+		$m = array();
+//die("<pre>" . htmlspecialchars($str).'</pre>');
+		preg_match('/当前解析视频：(.+)（请用右键"目标另存为"/u', strip_tags($str), $m);
+		$title = $m[1];
+
+		preg_match('/<a href="(.+)" target="_blank" onclick/u', $str, $m);
+		$url = $m[1];
+print_r($m);
+		return array('标题' => $title, '地址' => $url);
+	}
+
 	function _获取影片信息($页面地址){
+		return $this->_获取影片信息_flvcd($页面地址);	/// --greensea 2013-04-09 flvcd 的信息获取方式又改了，于是修改之
+		
 		//$源码 = ytp_file_get_contents("http://www.flvxz.com/getFlv.php?url=$页面地址");
 		//必须发送Cookie才能获取地址了
 		/**
@@ -165,6 +182,7 @@ function 哔——编码转换($str){
 }
 
 function ytp_file_get_contents($file) {
+	return file_get_contents($file);
 	return file_get_contents(iconv('utf-8', 'gb2312', $file));
 }
 
