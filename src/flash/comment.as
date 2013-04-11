@@ -1,7 +1,5 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
 
-import channel_t;
-
 //定义全局常量
 var FLY_SPEED_FAST:Number = 2500;		//快字幕速度：秒
 var FLY_SPEED_NORMAL:Number = 4000;	//中等速度字幕：秒
@@ -82,8 +80,10 @@ function _comment_init_last_check_conflicts_array() {
 var _fly_var_cmtid_to_channel_t:Array = new Array();
 
 //获取字幕源XML
-function fly_comment_push(xmlcmt){	
+function fly_comment_push(xmlcmt){
+	var t:Number;
 	var cmts = xml_getElementByTagName(xmlcmt, "comments").childNodes;
+
 	fly_var_queueLength = 0;
 	fly_var_queue = new Array();
 	for(var i = 0; i < cmts.length; i++){
@@ -112,8 +112,9 @@ function fly_comment_push(xmlcmt){
 			}
 			
 			//一系列的判断
-			if (_comment_var_last_timeline < cmts[i].attributes["commentTime"]) {
-				_comment_var_last_timeline = cmts[i].attributes["commentTime"];
+			t = Number(cmts[i].attributes["commentTime"]);
+			if (_comment_var_last_timeline < t) {
+				_comment_var_last_timeline = t;
 			}
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
@@ -301,11 +302,18 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 	//若已经超出时间则退出
 	var timePass:Number = _video_get_time() - startTime;
+	var curTime:Number = 0;
+	
+	for (i = 0; i < g_ns_curPlaying; i++) {
+		curTime += g_ns[i].duration;
+	}
+	curTime += g_ns[g_ns_curPlaying].ns.time;
+	
 	//trace("[_fly_move]（计算是否超时） timePass=" + timePass + ", speed=" + speed + ", _video_get_time() - ns.time = " + (_video_get_time() - ns.time));
 	/*
 	 * 因为这里的timePass计算出来的值可能受到计算机性能影响而造成偏差，所以这里加上预期的偏差值
 	 */
-	if(timePass > speed || timePass + Math.abs(_video_get_time() - ns.time) <= 0){
+	if(timePass > speed || timePass + Math.abs(_video_get_time() - curTime) <= 0){
 		_fly_delete(cmtID, txt);
 		return false;	
 	}
@@ -818,9 +826,10 @@ function _channel_get_index_by_cmtID(cmtID:Number, channel:Number) {
 
 //添加新评论
 function comment_add_comment(con, attr){
-	//先查找位置和分配一个ID，顺便插入位置
 	var id:Number = 0;
 	var insertPos:Number = 0;
+	
+	//先查找位置和分配一个ID，顺便插入位置
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 		if(attr.sTime > fly_var_queue[i].sTime){
@@ -862,7 +871,16 @@ function comment_add_comment(con, attr){
 function _comment_seek(tTime){
 	var needRestart = false;
 	var chl = null;
-	if(tTime == -1) tTime = ns.time;
+	
+	if(tTime == -1) {
+		//tTime = ns.time;
+		tTime = 0;
+		for (i = 0; i < g_ns_curPlaying; i++) {
+			tTime += g_ns[i].duration;
+		}
+		tTime += g_ns[g_ns_curPlaying].ns.time;
+	}
+	
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
 	//这里应该找到这个时间之前还不应该消失字幕
 	for(var i = 0; i < fly_var_queue.length; i++){
