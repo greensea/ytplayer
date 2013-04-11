@@ -36,9 +36,9 @@ class 邀踢动画类{
 		preg_match('/当前解析视频：(.+)（请用右键"目标另存为"/u', strip_tags($str), $m);
 		$title = $m[1];
 
-		preg_match('/<a href="(.+)" target="_blank" onclick/u', $str, $m);
-		$url = $m[1];
-print_r($m);
+		preg_match_all('/<a href="(.+)" target="_blank" onclick/u', $str, $m);
+		$url = join($m[1], "\n");
+		
 		return array('标题' => $title, '地址' => $url);
 	}
 
