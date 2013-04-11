@@ -90,8 +90,8 @@ function video_refresh_comment() {
 		url += "source=" + video_querystring_p;
 	}
 	url += "&timeline=" + _comment_var_last_timeline;
-	//trace(url);
-	
+	trace("获取新弹幕：" + url);
+
 	// 获取弹幕信息
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;
@@ -122,13 +122,13 @@ function video_refresh_comment() {
 								 sTime:cmts[i].attributes["playTime"],
 								 flySpeed:cmts[i].attributes["flySpeed"] / 1000,
 								 isSubtitle:cmts[i].attributes["isSubtitle"],
-								 commentTime:(cmts[i].attributes["commentTime"])
+								 commentTime:Number(cmts[i].attributes["commentTime"])
 								});
 				
 				// 一系列的判断
-				if (_comment_var_last_timeline < newCmt.commentTime) {
-					_comment_var_last_timeline = newCmt.commentTime;
-				}
+				//if (_comment_var_last_timeline < newCmt.commentTime) {
+				//	_comment_var_last_timeline = newCmt.commentTime;
+				//}
 				
 				if(newCmt[1].fontColor == "") newCmt[1].fontColor = FLY_FONTCOLOR_DEFAULT;
 				if(newCmt[1].flyType == "") newCmt[1].flyType = FLY_TYPE_FLY;
@@ -158,6 +158,7 @@ function video_refresh_comment() {
 				if (newCmt[1].commentTime > _comment_var_last_timeline) {
 					_comment_var_last_timeline = newCmt[1].commentTime;
 				}
+
 				comment_add_comment(newCmt[0], newCmt[1]);
 			}
 		}

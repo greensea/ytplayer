@@ -80,8 +80,10 @@ function _comment_init_last_check_conflicts_array() {
 var _fly_var_cmtid_to_channel_t:Array = new Array();
 
 //获取字幕源XML
-function fly_comment_push(xmlcmt){	
+function fly_comment_push(xmlcmt){
+	var t:Number;
 	var cmts = xml_getElementByTagName(xmlcmt, "comments").childNodes;
+
 	fly_var_queueLength = 0;
 	fly_var_queue = new Array();
 	for(var i = 0; i < cmts.length; i++){
@@ -110,8 +112,9 @@ function fly_comment_push(xmlcmt){
 			}
 			
 			//一系列的判断
-			if (_comment_var_last_timeline < cmts[i].attributes["commentTime"]) {
-				_comment_var_last_timeline = cmts[i].attributes["commentTime"];
+			t = Number(cmts[i].attributes["commentTime"]);
+			if (_comment_var_last_timeline < t) {
+				_comment_var_last_timeline = t;
 			}
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
@@ -823,9 +826,10 @@ function _channel_get_index_by_cmtID(cmtID:Number, channel:Number) {
 
 //添加新评论
 function comment_add_comment(con, attr){
-	//先查找位置和分配一个ID，顺便插入位置
 	var id:Number = 0;
 	var insertPos:Number = 0;
+	
+	//先查找位置和分配一个ID，顺便插入位置
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 		if(attr.sTime > fly_var_queue[i].sTime){
