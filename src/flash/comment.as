@@ -270,6 +270,9 @@ function _fly_comment_putScreen(comment){
 	//请求通道，并将文本放到通道上
 	var channel = _channel_request(comment, txt);
 	txt._y = channel[0];
+
+	//trace("txt._y = channel[0] = " + txt._y);
+
 	//显示文本
 	fly_show(txt, comment.flySpeed, comment.sTime, comment.flyType, comment.cmtID);
 }
@@ -481,7 +484,9 @@ function _channel_request(cmt:Object, txt:TextField) {
 	}
 	else {
 		curr.channel = -popsub_area_height;
+		//trace("1>curr.channel = " + curr.channel);
 		if (curr.channelBreadth < 100) curr.channel = _fly_var_last_check_conflicts_channel_bottom[curr.channelBreadth];
+		//trace("2>curr.channel = " + curr.channel);
 	}	
 	
 	/**
@@ -519,7 +524,9 @@ function _channel_request(cmt:Object, txt:TextField) {
 	while (!gotChannel);
 	
 	//ret[0] = _channel_do_mod(curr.channel, curr.channelBreadth, curr.flyType);
-	ret[0] = Math.abs(curr.channel) % 400;
+	//ret[0] = Math.abs(curr.channel) % 400;
+	//ret[0] = Math.abs(curr.channel) % (popsub_area_height + cmt.fontSize);
+	ret[0] = ((Math.abs(curr.channel) - cmt.fontSize) % popsub_area_height) + cmt.fontSize;
 	_fly_channel_occupy(curr);
 
 	ret[0] -= 2;

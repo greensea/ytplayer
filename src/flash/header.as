@@ -12,6 +12,9 @@ var FLASH_INTERVAL:Number = 30;	//通用刷新时间，毫秒
 var URL_PREFIX:String = "http://ytp.bbxy.net/";
 var VIDEO_REFRESH_COMMENT_INTERVAL = 2000;	// 弹幕“聊天”刷新的时间
 
+var G_VIDEO_DEFAULT_WIDTH = ytVideo._width;
+var G_VIDEO_DEFAULT_HEIGHT = ytVideo._height;
+
 //定义全局变量
 var nc:NetConnection;
 var ns:NetStream;

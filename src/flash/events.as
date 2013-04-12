@@ -2,6 +2,8 @@
 /*******	events.as		***********/
 /**************************************/
 
+import flash.events.FullScreenEvent;  
+
 trace("正在加载所有按钮的事件");
 
 /// 信息窗口按钮
@@ -24,6 +26,38 @@ btnSts.addEventListener("click", function (evt) {
 btnFullScreen.addEventListener("click", function (evt) {
 	Stage.displayState = "fullScreen";
 });
+
+ytOnFullScreen = new Object();
+ytOnFullScreen.onFullScreen = function( bFull:Boolean ) {
+	tip_add("On Fullscreen");
+	if (Stage.displayState == "fullScreen") {
+		//ytVideo._height = Stage.fullScreenHeight;
+		//ytVideo._width = Stage.width;
+		ytvideo_setshape(Stage.fullScreenHeight, Stage.fullScreenWidth);
+		dgrComments._visible = false;
+		stsLoading._visible = false;
+	}
+	else {
+		//ytVideo._height = G_VIDEO_DEFAULT_HEIGHT;
+		//ytVideo._width = G_VIDEO_DEFAULT_WIDTH;
+		ytvideo_setshape(G_VIDEO_DEFAULT_WIDTH, G_VIDEO_DEFAULT_HEIGHT);
+		stsLoading._visible = true;
+		dgrComments._visible = true
+	}
+	
+	ytVideo._x = 0;
+	ytVideo._y = 0;
+	
+	//video_setshape();
+	
+	// Set popsub drawing area
+	fly_subtitle_redline = ytVideo._height;
+	popsub_area_height = ytVideo._height;
+	popsub_area_width = ytVideo._width;
+}
+Stage.addListener( ytOnFullScreen );
+
+
 
 ///  显示/不显示弹幕
 commentWriter.btnWriterDisplay.addEventListener("click", function (evt) {
