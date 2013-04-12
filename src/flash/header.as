@@ -28,6 +28,7 @@ var g_ns_curPlaying:Number = 0;	/// 当前正在播放的视频分段
 
 //包含文件
 #include "_init.as"
+#include "events.as"
 #include "_functions.as"
 #include "comment.as"
 #include "commentgrid.as"
