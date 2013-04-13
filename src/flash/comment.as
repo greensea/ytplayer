@@ -264,7 +264,7 @@ function _fly_comment_putScreen(comment){
 	//设置非飘移字体的位置
 	if(comment.flyType != FLY_TYPE_FLY){
 		txt._visible = false;
-		txt._x = (ytVideo._width - txt.textWidth) / 2;
+		txt._x = (FLY_STARTING_X - txt.textWidth) / 2;
 	}
 	
 	//请求通道，并将文本放到通道上

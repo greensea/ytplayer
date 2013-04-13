@@ -33,7 +33,7 @@ function main(){
 			
 			show_black_bg();
 			
-			ytvideo_setshape(w, h);
+			//ytvideo_setshape(w, h);
 			
 			tip_add("视频信息（第" + this.id + "段）：" + (Math.round(infoObject["duration"] * 100) / 100) + "s, " + infoObject["width"] + "x" + infoObject["height"]);
 			
@@ -199,7 +199,7 @@ function main_startplay() {
 	
 	mx.behaviors.DepthControl.bringToFront(dgrComments);	//显示评论层
 	
-	ytvideo_setshape(g_ns[0].videowidth, g_ns[0].videoheight);
+	ytvideo_setshape(ytVideo._width, ytVideo._height);
 
 	ytVideo.attachVideo(g_ns[0].ns);
 	ytVideo.smoothing = true;
@@ -212,11 +212,54 @@ function main_startplay() {
 
 /// 设置播放界面的形态，即设置大小并调整位置
 function ytvideo_setshape(w:Number, h:Number) {
-	ytVideo._height = ytVideo._width * h / w;
-	ytVideo._y = (g_playarea_height - ytVideo._height) / 2;
+	var px:Number = 0;	/// 计算得出的播放窗口坐标
+	var py:Number = 0;
+	var vh:Number = 0;	/// 计算得出的视频高宽
+	var vw:Number = 0;
+	var sh:Number = g_ns[g_ns_curPlaying].videoheight;	/// 视频原始的高宽
+	var sw:Number = g_ns[g_ns_curPlaying].videowidth;
 	
-	trace("设置播放窗口形态：" + ytVideo._width + "x" + ytVideo._height +" (" + ytVideo._x + "," + ytVideo._y + ")");
+	tip_add(sh);
+	tip_add(sw);
+	tip_add(ytVideo);
+	tip_add((sh / sw) + "<-->" + (h / w));
+	tip_add("(" + sh + "," + sw + ")<-->(" + h + "," + w + ")");
+	if (sh / sw <= h / w) {
+		/// 视频是宽屏的，需要计算垂直坐标
+		tip_add("宽屏视频");
+		
+		px = 0;
+		
+		vw = w;
+		vh = sh / sw * vw;
+		
+		py = (h - vh) / 2;
+	}
+	else {
+		/// 视频是瘦的，需要计算水平坐标
+		tip_add("瘦视频");
+		
+		py = 0;
+		
+		vh = h;
+		vw = sw / sh * vh;
+		
+		px = (w - vw) / 2;
 	
+	}
+	
+	ytVideo._height = vh;
+	ytVideo._width = vw;
+	ytVideo._y = py;
+	ytVideo._x = px;
+	tip_add("设置播放窗口形态：" + ytVideo._width + "x" + ytVideo._height +" (" + ytVideo._x + "," + ytVideo._y + ")");
+	
+	
+	// Set popsub drawing area	
+	fly_subtitle_redline = h;
+	popsub_area_height = h;
+	popsub_area_width = w;
+	FLY_STARTING_X = w;
 }
 
 /**************状态显示 函数*****************/
@@ -400,7 +443,7 @@ function video_switch(i:Number) {
 	
 	tip_add("切换到第" + (i + 1) + " 段视频");
 	
-	ytvideo_setshape(g_ns[i].videowidth, g_ns[i].videoheight);
+	//ytvideo_setshape(g_ns[i].videowidth, g_ns[i].videoheight);
 	
 	ytVideo.attachVideo(g_ns[i].ns);
 	if (g_ns[i].ready != true) {

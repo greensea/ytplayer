@@ -24,6 +24,13 @@ btnSts.addEventListener("click", function (evt) {
 
 /// 全屏按钮
 btnFullScreen.addEventListener("click", function (evt) {
+	
+	Stage.width = Stage.fullScreenWidth;
+	Stage.height = Stage.fullScreenHeight;
+	Stage.scaleMode = "noBorder";
+	
+	//tip_add("设置层0到 " + _level0._width + "x" + _level0._height);
+	
 	Stage.displayState = "fullScreen";
 });
 
@@ -33,27 +40,58 @@ ytOnFullScreen.onFullScreen = function( bFull:Boolean ) {
 	if (Stage.displayState == "fullScreen") {
 		//ytVideo._height = Stage.fullScreenHeight;
 		//ytVideo._width = Stage.width;
-		ytvideo_setshape(Stage.fullScreenHeight, Stage.fullScreenWidth);
+		g_playarea_height = Stage.height;
+				
+		//ytvideo_setshape(_level0._width, _level0._height);
+		//ytvideo_setshape(Stage.fullScreenWidth, Stage.fullScreenHeight);
+		//ytvideo_setshape(G_LEVEL_DEFAULT_WIDTH, G_LEVEL_DEFAULT_HEIGHT);
+		
+		ytvideo_setshape(Stage.width , Stage.height);
+		
+		bgDango._visible = false;
+		
 		dgrComments._visible = false;
 		stsLoading._visible = false;
+		commentWriter._visible = false;
+		btnSts._visible = false;
+		btnStsLoading._visible = false;
+		btnComment._visible = false;
+		btnFullScreen._visible = false;
+		playerControl._visible = false;
+		btnWriterFontColor._visible = false;
+		
+		tip_add("全屏大小: " + Stage.fullScreenWidth + "x" + Stage.fullScreenHeight);
 	}
 	else {
 		//ytVideo._height = G_VIDEO_DEFAULT_HEIGHT;
 		//ytVideo._width = G_VIDEO_DEFAULT_WIDTH;
+		g_playarea_height = G_VIDEO_DEFAULT_HEIGHT;
+		
+		//_level0._height = G_LEVEL_DEFAULT_HEIGHT;
+		//_level0._width = G_LEVEL_DEFAULT_WIDTH;
+		
+		//_level0._height = Stage.fullScreenHeight;
+		//_level0._width = Stage.fullScreenWidth;
+		
 		ytvideo_setshape(G_VIDEO_DEFAULT_WIDTH, G_VIDEO_DEFAULT_HEIGHT);
+		
+		bgDango._visible = true;
+		
 		stsLoading._visible = true;
 		dgrComments._visible = true
+		commentWriter._visible = true;
+		btnSts._visible = true;
+		btnStsLoading._visible = true;
+		btnComment._visible = true;
+		btnFullScreen._visible = true;
+		playerControl._visible = true;
+		btnWriterFontColor._visible = true;
+		
 	}
 	
-	ytVideo._x = 0;
-	ytVideo._y = 0;
 	
 	//video_setshape();
-	
-	// Set popsub drawing area
-	fly_subtitle_redline = ytVideo._height;
-	popsub_area_height = ytVideo._height;
-	popsub_area_width = ytVideo._width;
+
 }
 Stage.addListener( ytOnFullScreen );
 
@@ -85,7 +123,6 @@ commentWriter.cmbWriterFontSize.addEventListener("change", function (evt) {
 
 /// 弹幕方式按钮
 commentWriter.btnCommentStyle.onPress = function (evt) {
-	trace("ttttrigger");
 	window_comment_style._visible = !window_comment_style._visible;
 };
 
