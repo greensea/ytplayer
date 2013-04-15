@@ -14,7 +14,7 @@ flyTypeWindow._visible = false;
 	
 video_button_enable(false);
 	
-dgrComment.setStyle("fontFamily", "宋体");
+dgrComment.setStyle("fontFamily", "_sans");
 	
 tip_add("加载参数: b=" + _root.b);
 

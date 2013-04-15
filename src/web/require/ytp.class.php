@@ -36,9 +36,10 @@ class 邀踢动画类{
 		preg_match('/当前解析视频：(.+)（请用右键"目标另存为"/u', strip_tags($str), $m);
 		$title = $m[1];
 
-		preg_match('/<a href="(.+)" target="_blank" onclick/u', $str, $m);
-		$url = $m[1];
-print_r($m);
+		preg_match_all('/<a href="(.+)" target="_blank" onclick/u', $str, $m);
+		$url = join($m[1], "\n");
+
+		/// 如果视频是由多段视频组成的，则'地址'变量将包含所有的分段视频地址，分段视频地址间以 \n 分隔	
 		return array('标题' => $title, '地址' => $url);
 	}
 
@@ -116,12 +117,12 @@ print_r($m);
 		$地址正规式 = '/<url><\!\[CDATA\[(.+)\]\]><\/url>/mi';
 		$标题正规式 = '/<vname><\!\[CDATA\[(.+)\]\]><\/vname>/mi';
 		
-		if (preg_match($地址正规式, $源码, $地址结果) == 0) return null;
+		if (preg_match_all($地址正规式, $源码, $地址结果) == 0) return null;
 		if (preg_match($标题正规式, $源码, $标题结果) == 0) return null;
 
 		return array(
 					'标题' => $标题结果[1],
-					'地址' => $地址结果[1]
+					'地址' => join($地址结果[1], "\n")
 					);
 	}
 	
