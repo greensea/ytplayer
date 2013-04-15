@@ -492,9 +492,10 @@ function _video_playing(){
 function _video_get_time(){
 	var tsec:Number = 0;
 	
-	for (i = 0; i < gs_n.length; i++) {
-		tsec += g_ns[i].ns.time;
+	for (i = 0; i < g_ns_curPlaying; i++) {
+		tsec += g_ns[i].duration;
 	}
+	tsec += g_ns[g_ns_curPlaying].ns.time;
 	
 	if((video_var_playing || video_var_playing_eof) && !video_var_buffering ){
 		var rTime = _video_var_time_ns + (getTimer() / 1000 - _video_var_time);
