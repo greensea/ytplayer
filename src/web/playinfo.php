@@ -115,6 +115,8 @@ $可扩展标记语言 = sprintf($可扩展标记语言模板,
 										$播放次数,
 										htmlspecialchars($标题),
 										htmlspecialchars($说明),
+										1, // 在线人数（TODO: 尚未实现）
+										count($弹幕数组),
 										$可扩展标记语言。评论元素
 									);
 
