@@ -6,3 +6,87 @@ ytplayer 是一个弹幕播放器，创建于 bilibili 建站前期，但是和 
 
 部署说明请看 INSTALL.md 文件
 
+== Flash 播放器如何获取和发送弹幕？ ==
+
+=== 发送弹幕 ===
+
+Flash 播放器会将弹幕以 HTTP GET 方式发送给 savecomment.php 页面，各参数意义如下
+
+content：经过 URL 编码的弹幕内容
+
+fontsize：弹幕字号
+
+color：弹幕字体颜色，以十进制表示的十六进制颜色值。比如，若颜色为蓝色（#0000ff），那么这里的值就应该为 255
+
+mode：弹幕模式，0=底部弹幕，2=顶部弹幕，3=飞行弹幕，4=字幕菌
+
+playtime：弹幕对应的影片播放时间，以毫秒为单位
+
+id：弹幕对应的影片编号
+
+完整的请求应该和下面的例子类似：
+
+savecomment.php?content=%E6%B5%8B%E8%AF%95&fontsize=22&color=16777215&mode=3&playtime=199697&id=52
+
+这个例子将会发送一个内容为“测试”，颜色白色，字号为 22，对应 52 号影片，并在影片播放到 199.697s 时出现的飞行弹幕。
+
+=== 获取弹幕 ===
+
+Flash 播放器在加载的时候会通过 playinfo.php 以 HTTP GET 方式读取对应影片的信息以及弹幕，参数如下：
+
+id：影片编号
+
+完整的请求应该和下面的例子类似：
+
+playinfo.php?id=56
+
+playinfo.php 会以 XML 格式返回影片信息及弹幕，格式如下：
+
+<ytPlayer>
+    <video>
+        <flvID>1</flvID>
+        <flvURL>http://v61.v.iask.com/f/1/4de79ddcc3fc25fe3fe2237d8499f01316750450.flv</flvURL>
+        <playTimes>424</playTimes>
+        <title>新华里同人歌曲新专辑5in1 - 10月号「大容量」</title>
+      </video>
+      <onlineCount>1</onlineCount>
+      <commentCount>3</commentCount>
+      <comments>
+        <comment id="11907" fontSize="22" flySpeed="3000" fontColor="ffcccc" flyType="fly" isSubtitle="0" playTime="0.000" commentTime="1226642291">结束之后的弹幕测试</comment>
+        <comment id="11849" fontSize="22" flySpeed="3000" fontColor="ffffff" flyType="fly" isSubtitle="0" playTime="0.000" commentTime="1226600750">就归结为Flash的技术问题吧</comment>
+        <comment id="11848" fontSize="22" flySpeed="3000" fontColor="ffffff" flyType="fly" isSubtitle="0" playTime="0.000" commentTime="1226600740">其实理论上来说只要缓冲够了应该是可以定位到任意帧的嘛</comment>
+      </comments>
+<ytPlayer>
+
+各元素意义如下：
+
+flvID：影片编号
+
+flvURL：视频下载地址，如果视频被分段，则各段地址将以换行符 '\n' 进行分隔
+
+playTimes：视频总时长，单位为秒
+
+title：视频标题
+
+onlineCount：当前在线人数
+
+commentCount：弹幕总数
+
+<commnet> 元素的值为弹幕内容，各属性的意义如下：
+
+id：弹幕编号
+
+fontSize：弹幕大小
+
+flySpeed：弹幕显示时间，即从弹幕出现到弹幕消失的时间总和
+
+fontColor：弹幕文字颜色
+
+flyType：弹幕类型，可选值为 [fly|top|bottom]
+
+isSubtitle：是否为弹幕菌的弹幕，1=是，0=否
+
+playTime：弹幕出现时的影片时间，单位为秒，精确到小数点后 3 位
+
+commentTime：弹幕发表的时间，单位为 UNIX 时间戳
+
