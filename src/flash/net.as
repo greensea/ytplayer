@@ -122,7 +122,8 @@ function video_refresh_comment() {
 								 sTime:cmts[i].attributes["playTime"],
 								 flySpeed:cmts[i].attributes["flySpeed"] / 1000,
 								 isSubtitle:cmts[i].attributes["isSubtitle"],
-								 commentTime:Number(cmts[i].attributes["commentTime"])
+								 commentTime:Number(cmts[i].attributes["commentTime"]),
+								 sentByMe:false
 								});
 				
 				// 一系列的判断

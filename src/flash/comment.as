@@ -30,10 +30,23 @@ var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
 
 /* a1 表示评论位置， a0 表示是否飘移 */
 var fly_type:Object ={top:0x2, bottom:0x0, fly:0x3};
+
+/**
+ * 参数说明：
+ * cmtID: 弹幕编号
+ * cmtText: 弹幕内容
+ * sTime: 弹幕对应的影片播放时间
+ * flyType: 弹幕飞行方式
+ * flySpeed: 弹幕显现在屏幕上的时间长度
+ * fontColor: 弹幕文字颜色
+ * fontSize: 弹幕字体大小
+ * sentByMe: 弹幕是不是自己发送的，这个参数仅在发送弹幕的时候用来给自己发送的弹幕加上标记
+ */
 /*
 var fly_var_queue:Object = {
 	cmtID:Number, cmtText:String, 
 	sTime:Number, flyType:Number, flySpeed:Number, fontColor:Number, fontSize:Number
+	sentByMe:Boolean
 };
 */
 
@@ -108,7 +121,8 @@ function fly_comment_push(xmlcmt){
 				flyType:cmts[i].attributes["flyType"],
 				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0), //单位：s
 				channel:cmts[i].attributes["channel"],
-				alignment:cmts[i].attributes["alignment"]
+				alignment:cmts[i].attributes["alignment"],
+				sentByMe:false
 			}
 			
 			//一系列的判断
@@ -199,8 +213,9 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 		return false;
 	}
 			
-trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
+	trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
 		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText + ", _fly_var_channels.length=" + _fly_var_channels.length);
+	
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i].cmtID){
@@ -265,6 +280,11 @@ function _fly_comment_putScreen(comment){
 	if(comment.flyType != FLY_TYPE_FLY){
 		txt._visible = false;
 		txt._x = (FLY_STARTING_X - txt.textWidth) / 2;
+	}
+	
+	/// 给自己发送的弹幕加上标记
+	if (comment.sentByMe == true) {
+		/// TODO: 给自己发送的弹幕加上任何想要的效果
 	}
 	
 	//请求通道，并将文本放到通道上
@@ -853,7 +873,8 @@ function comment_add_comment(con, attr){
 		fontColor:attr.fontColor.toString(16),
 		fontSize:attr.fontSize,
 		flyType:attr.flyType,
-		flySpeed:(attr.flySpeed) //单位：s
+		flySpeed:(attr.flySpeed), //单位：s
+		sentByMe:(attr.sentByMe)
 	}
 
 	//添加到右部评论
