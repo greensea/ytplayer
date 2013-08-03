@@ -1,7 +1,5 @@
 ﻿/** ytPlayer  飘移评论控制脚本 **/
 
-import channel_t;
-
 //定义全局常量
 var FLY_SPEED_FAST:Number = 2500;		//快字幕速度：秒
 var FLY_SPEED_NORMAL:Number = 4000;	//中等速度字幕：秒
@@ -32,10 +30,23 @@ var FLY_FLASH_INTERVAL:Number = 30;		//字幕刷新间隔：毫秒
 
 /* a1 表示评论位置， a0 表示是否飘移 */
 var fly_type:Object ={top:0x2, bottom:0x0, fly:0x3};
+
+/**
+ * 参数说明：
+ * cmtID: 弹幕编号
+ * cmtText: 弹幕内容
+ * sTime: 弹幕对应的影片播放时间
+ * flyType: 弹幕飞行方式
+ * flySpeed: 弹幕显现在屏幕上的时间长度
+ * fontColor: 弹幕文字颜色
+ * fontSize: 弹幕字体大小
+ * sentByMe: 弹幕是不是自己发送的，这个参数仅在发送弹幕的时候用来给自己发送的弹幕加上标记
+ */
 /*
 var fly_var_queue:Object = {
 	cmtID:Number, cmtText:String, 
 	sTime:Number, flyType:Number, flySpeed:Number, fontColor:Number, fontSize:Number
+	sentByMe:Boolean
 };
 */
 
@@ -82,8 +93,10 @@ function _comment_init_last_check_conflicts_array() {
 var _fly_var_cmtid_to_channel_t:Array = new Array();
 
 //获取字幕源XML
-function fly_comment_push(xmlcmt){	
+function fly_comment_push(xmlcmt){
+	var t:Number;
 	var cmts = xml_getElementByTagName(xmlcmt, "comments").childNodes;
+
 	fly_var_queueLength = 0;
 	fly_var_queue = new Array();
 	for(var i = 0; i < cmts.length; i++){
@@ -108,12 +121,14 @@ function fly_comment_push(xmlcmt){
 				flyType:cmts[i].attributes["flyType"],
 				flySpeed:(cmts[i].attributes["flySpeed"] / 1000.0), //单位：s
 				channel:cmts[i].attributes["channel"],
-				alignment:cmts[i].attributes["alignment"]
+				alignment:cmts[i].attributes["alignment"],
+				sentByMe:false
 			}
 			
 			//一系列的判断
-			if (_comment_var_last_timeline < cmts[i].attributes["commentTime"]) {
-				_comment_var_last_timeline = cmts[i].attributes["commentTime"];
+			t = Number(cmts[i].attributes["commentTime"]);
+			if (_comment_var_last_timeline < t) {
+				_comment_var_last_timeline = t;
 			}
 			if(newCmt.fontColor == "") newCmt.fontColor = FLY_FONTCOLOR_DEFAULT;
 			if(newCmt.flyType == "") newCmt.flyType = FLY_TYPE_FLY;
@@ -198,8 +213,9 @@ function fly_comment_new(nextQueueIndex:Number, enforce:Boolean){
 		return false;
 	}
 			
-trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
+	trace("[fly_comment_new] indexNext=" + fly_var_indexNext + ", videotime=" + _video_get_time() + ",sTime=" + comment.sTime + ", color=" + comment.fontColor + 
 		", size=" + comment.fontSize + ", id=" + comment.cmtID + ", text=" + comment.cmtText + ", _fly_var_channels.length=" + _fly_var_channels.length);
+	
 	//该字体是否已经在通道上（即正在显示），是则查找下一个未显示的评论（此部分不完善，禁止多次调用）
 	for(var i = 0; i < _fly_var_channels.length; i++){
 		if(comment.cmtID == _fly_var_channels[i].cmtID){
@@ -263,12 +279,20 @@ function _fly_comment_putScreen(comment){
 	//设置非飘移字体的位置
 	if(comment.flyType != FLY_TYPE_FLY){
 		txt._visible = false;
-		txt._x = (ytVideo._width - txt.textWidth) / 2;
+		txt._x = (FLY_STARTING_X - txt.textWidth) / 2;
+	}
+	
+	/// 给自己发送的弹幕加上标记
+	if (comment.sentByMe == true) {
+		/// TODO: 给自己发送的弹幕加上任何想要的效果
 	}
 	
 	//请求通道，并将文本放到通道上
 	var channel = _channel_request(comment, txt);
 	txt._y = channel[0];
+
+	//trace("txt._y = channel[0] = " + txt._y);
+
 	//显示文本
 	fly_show(txt, comment.flySpeed, comment.sTime, comment.flyType, comment.cmtID);
 }
@@ -301,11 +325,18 @@ function fly_show(txt:TextField, speed:Number, startTime:Number, flyType:Number,
 function _fly_move(txt:TextField, speed:Number, startTime:Number, cmtID:Number){
 	//若已经超出时间则退出
 	var timePass:Number = _video_get_time() - startTime;
+	var curTime:Number = 0;
+	
+	for (i = 0; i < g_ns_curPlaying; i++) {
+		curTime += g_ns[i].duration;
+	}
+	curTime += g_ns[g_ns_curPlaying].ns.time;
+	
 	//trace("[_fly_move]（计算是否超时） timePass=" + timePass + ", speed=" + speed + ", _video_get_time() - ns.time = " + (_video_get_time() - ns.time));
 	/*
 	 * 因为这里的timePass计算出来的值可能受到计算机性能影响而造成偏差，所以这里加上预期的偏差值
 	 */
-	if(timePass > speed || timePass + Math.abs(_video_get_time() - ns.time) <= 0){
+	if(timePass > speed || timePass + Math.abs(_video_get_time() - curTime) <= 0){
 		_fly_delete(cmtID, txt);
 		return false;	
 	}
@@ -473,7 +504,9 @@ function _channel_request(cmt:Object, txt:TextField) {
 	}
 	else {
 		curr.channel = -popsub_area_height;
+		//trace("1>curr.channel = " + curr.channel);
 		if (curr.channelBreadth < 100) curr.channel = _fly_var_last_check_conflicts_channel_bottom[curr.channelBreadth];
+		//trace("2>curr.channel = " + curr.channel);
 	}	
 	
 	/**
@@ -511,7 +544,9 @@ function _channel_request(cmt:Object, txt:TextField) {
 	while (!gotChannel);
 	
 	//ret[0] = _channel_do_mod(curr.channel, curr.channelBreadth, curr.flyType);
-	ret[0] = Math.abs(curr.channel) % 400;
+	//ret[0] = Math.abs(curr.channel) % 400;
+	//ret[0] = Math.abs(curr.channel) % (popsub_area_height + cmt.fontSize);
+	ret[0] = ((Math.abs(curr.channel) - cmt.fontSize) % popsub_area_height) + cmt.fontSize;
 	_fly_channel_occupy(curr);
 
 	ret[0] -= 2;
@@ -818,9 +853,10 @@ function _channel_get_index_by_cmtID(cmtID:Number, channel:Number) {
 
 //添加新评论
 function comment_add_comment(con, attr){
-	//先查找位置和分配一个ID，顺便插入位置
 	var id:Number = 0;
 	var insertPos:Number = 0;
+	
+	//先查找位置和分配一个ID，顺便插入位置
 	for(var i = 0; i < fly_var_queue.length; i++){
 		if(id < fly_var_queue[i].cmtID) id = fly_var_queue[i].cmtID;
 		if(attr.sTime > fly_var_queue[i].sTime){
@@ -837,7 +873,8 @@ function comment_add_comment(con, attr){
 		fontColor:attr.fontColor.toString(16),
 		fontSize:attr.fontSize,
 		flyType:attr.flyType,
-		flySpeed:(attr.flySpeed) //单位：s
+		flySpeed:(attr.flySpeed), //单位：s
+		sentByMe:(attr.sentByMe)
 	}
 
 	//添加到右部评论
@@ -862,7 +899,16 @@ function comment_add_comment(con, attr){
 function _comment_seek(tTime){
 	var needRestart = false;
 	var chl = null;
-	if(tTime == -1) tTime = ns.time;
+	
+	if(tTime == -1) {
+		//tTime = ns.time;
+		tTime = 0;
+		for (i = 0; i < g_ns_curPlaying; i++) {
+			tTime += g_ns[i].duration;
+		}
+		tTime += g_ns[g_ns_curPlaying].ns.time;
+	}
+	
 	//在字幕列表中查找相应的位置，设置 _fly_var_nextIndex
 	//这里应该找到这个时间之前还不应该消失字幕
 	for(var i = 0; i < fly_var_queue.length; i++){

@@ -30,21 +30,27 @@ else{
 	if(!$结果) over('无此动画');
 }
 
-
+/*
 $语句一 = "SELECT 播放数,标题,说明,缩略图路径,地址,源页面 FROM 动画 WHERE 编号=$动画编号";
 $语句二 = "SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号,通道,位置 FROM 弹幕 WHERE 动画编号=$动画编号
 			UNION
 			SELECT 内容,播放时间,评论时间,颜色,字号,速度,模式,编号,通道,位置 FROM 分组弹幕 WHERE 组编号 IN (SELECT 编号 FROM 弹幕分组 WHERE 动画编号=$动画编号)
 			ORDER BY 播放时间 ASC";
+*/
 $语句一 = "SELECT hits,title,description,thumbnail,sourcefile,sourcepage FROM video WHERE id=$动画编号";
 $语句二 = "SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM popsub WHERE videoid=$动画编号 AND popsubtime>$时间线
 			UNION
 			SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM group_popsub WHERE groupid IN (SELECT id FROM popsub_group WHERE videoid=$动画编号 AND popsubtime>$时间线)
 			ORDER BY playtime ASC";
+$语句三 = "SELECT COUNT(id) AS cnt FROM (SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM popsub WHERE videoid=$动画编号
+                        UNION
+                        SELECT content,playtime,popsubtime,color,fontsize,speed,flymode,id,channel,position FROM group_popsub WHERE groupid IN (SELECT id FROM popsub_group WHERE videoid=$动画编号)) AS t";
 
 if(!$动画数组) $动画数组 = $数据库->查询($语句一);
 
 $弹幕数组 = $数据库->查询($语句二);
+$弹幕总数结果 = $数据库->查询($语句三);
+$弹幕总数 = $弹幕总数结果[0]['cnt'];
 
 $影片地址 = $动画数组[0]['sourcefile'];
 $播放次数 = $动画数组[0]['hits'];
@@ -130,6 +136,7 @@ function 可扩展标记语言输出($弹幕数组) {
 	return $可扩展标记语言;
 }
 
+
 function 爪哇脚本对象表示($弹幕数组) {
 	global $动画编号;
 	global $影片地址;
@@ -161,6 +168,17 @@ function 爪哇脚本对象表示($弹幕数组) {
 	
 	return json_encode($结果数组);
 }
+
+$可扩展标记语言 = sprintf($可扩展标记语言模板, 
+										$动画编号,
+										htmlspecialchars($影片地址),
+										$播放次数,
+										htmlspecialchars($标题),
+										htmlspecialchars($说明),
+										1, // 在线人数（TODO: 尚未实现）
+										$弹幕总数,
+										$可扩展标记语言。评论元素
+									);
 
 //echo htmlspecialchars($可扩展标记语言);
 ob_clean();

@@ -34,7 +34,8 @@ function writer_submit(){
 								 sTime:playTime,
 								 flySpeed:FLY_SPEED_NORMAL / 1000,
 								 isSubtitle:_writer_var_issubtitle,
-								 commentTime:(new Date())
+								 commentTime:(new Date()),
+								 sentByMe:true
 						});
 	if(_writer_var_issubtitle) newCmt[1].flyType = FLY_TYPE_SUBTITLE;
 	comment_add_comment(newCmt[0], newCmt[1])

@@ -2,11 +2,13 @@
 <ytPlayer>
 	<video>
 		<flvID>%d</flvID>
-		<flvURL>%s</flvURL>
+		<flvURL><![CDATA[%s]]></flvURL>
 		<playTimes>%d</playTimes>
 		<title>%s</title>
 		<description>%s</description>
 	</video>
+	<onlineCount>%d</onlineCount>
+	<commentCount>%d</commentCount>
 	<comments>%s	</comments>
 </ytPlayer>
 

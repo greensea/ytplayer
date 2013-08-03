@@ -8,7 +8,8 @@ var video_var_flvid = 0;
 var video_var_relocated:Boolean = false;
 var video_var_relocate_waiter = 0;
 
-var VIDEO_RELOCATE_WAITTIME = 5;	//首次联系超时后进行重定位的时间
+
+var VIDEO_RELOCATE_WAITTIME = 10;	//首次加载视频超时后进行重定位的时间
 
 Security.loadPolicyFile("*");
 
@@ -26,12 +27,16 @@ function video_init(){
 	if(!_root.b) video_querystring_p = 1;	//默认的视频编号，调试的时候可以改这个为指定的视频编号
 		
 	var url = URL_PREFIX + "playinfo.php?relocate=0&";
+
 	if(typeof(video_querystring_p) == "number"){
 		url += "id=" + video_querystring_p;
 	}
 	else{
 		url += "source=" + video_querystring_p;
 	}
+	
+	//var url = "data.52.xml";	/// <!>仅供调试
+
 	trace(url);
 	tip_add("加载动画信息：" );//+ url);
 	
@@ -53,7 +58,19 @@ function video_init(){
 		//获取相关数据
 		video_var_flvurl = xml_getElementByTagName(this, "flvURL").childNodes[0].nodeValue;
 		video_var_flvid = xml_getElementByTagName(this, "flvID").childNodes[0].nodeValue;
-
+		var urls = video_var_flvurl.split("\r");
+		trace("共" + urls.length + "个视频分段");
+		for (i = 0; i < urls.length; i++) {
+			g_ns.push(new g_ns_t());
+			g_ns[i].nc = new NetConnection();
+			g_ns[i].nc.connect(null);
+			
+			g_ns[i].ns = new NetStream(g_ns[i].nc);
+			g_ns[i].ns.id = i;
+			g_ns[i].flvurl = urls[i];
+			trace("第 " + (i + 1) + " 段视频地址：" + g_ns[i].flvurl);
+		}
+		
 		//压入评论表（该函数同时会启动字幕飘移事件）
 		fly_comment_push(this);
 		
@@ -73,8 +90,8 @@ function video_refresh_comment() {
 		url += "source=" + video_querystring_p;
 	}
 	url += "&timeline=" + _comment_var_last_timeline;
-	trace(url);
-	
+	trace("获取新弹幕：" + url);
+
 	// 获取弹幕信息
 	var xmlvideo = new XML();
 	xmlvideo.ignoreWhitespace = true;
@@ -105,13 +122,14 @@ function video_refresh_comment() {
 								 sTime:cmts[i].attributes["playTime"],
 								 flySpeed:cmts[i].attributes["flySpeed"] / 1000,
 								 isSubtitle:cmts[i].attributes["isSubtitle"],
-								 commentTime:(cmts[i].attributes["commentTime"])
+								 commentTime:Number(cmts[i].attributes["commentTime"]),
+								 sentByMe:false
 								});
 				
 				// 一系列的判断
-				if (_comment_var_last_timeline < newCmt.commentTime) {
-					_comment_var_last_timeline = newCmt.commentTime;
-				}
+				//if (_comment_var_last_timeline < newCmt.commentTime) {
+				//	_comment_var_last_timeline = newCmt.commentTime;
+				//}
 				
 				if(newCmt[1].fontColor == "") newCmt[1].fontColor = FLY_FONTCOLOR_DEFAULT;
 				if(newCmt[1].flyType == "") newCmt[1].flyType = FLY_TYPE_FLY;
@@ -141,6 +159,7 @@ function video_refresh_comment() {
 				if (newCmt[1].commentTime > _comment_var_last_timeline) {
 					_comment_var_last_timeline = newCmt[1].commentTime;
 				}
+
 				comment_add_comment(newCmt[0], newCmt[1]);
 			}
 		}
@@ -149,6 +168,7 @@ function video_refresh_comment() {
 
 function video_relocate(){
 	if(video_var_relocated) return false;	//如果已经重定位过了，就不要重定位了
+
 	if(video_var_relocate_waiter == 0){
 		return false;	//如果已经开始播放了，那就不用重定位了
 	}
@@ -176,10 +196,22 @@ function video_relocate(){
 			tip_add("错误：" + e.childNodes[0].nodeValue);
 			return false;
 		}
+		
 		video_var_flvurl = xml_getElementByTagName(this, "flvURL").childNodes[0].nodeValue;
+		var urls = video_var_flvurl.split("\r");
+		trace("共" + urls.length + "个视频分段");
+		for (i = 0; i < urls.length; i++) {
+			g_ns[i].nc = new NetConnection();
+			g_ns[i].nc.connect(null);
+			
+			g_ns[i].ns = new NetStream(g_ns[i].nc);
+			g_ns[i].ns.id = i;
+			g_ns[i].flvurl = urls[i];
+			trace("第 " + (i + 1) + " 段视频地址：" + g_ns[i].flvurl);
+		}
 
 		tip_add("重定位完毕，正在连接...");// + video_var_flvurl);
-		_root.ns.play(video_var_flvurl);
+		main();
 	}
 }
 
