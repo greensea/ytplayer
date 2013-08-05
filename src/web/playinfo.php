@@ -164,21 +164,28 @@ function 爪哇脚本对象表示($弹幕数组) {
 	$结果数组['video']['title'] = $标题;
 	$结果数组['video']['description'] = $说明;
 	
+	
+	/// 处理弹幕数组的键
+	$键表 = array('playtime' => 'playTime',
+			'popsubtime' => 'commentTime',
+			'fontsize' => 'fontSize',
+			'speed' => 'flySpeed',
+			'flymode' => 'flyType',
+			'color' => 'fontColor'
+		);
+	for ($i = 0; $i < count($弹幕数组); $i++) {
+		foreach ($键表 as $键 => $值) {
+			$弹幕数组[$i][$值] = $弹幕数组[$i][$键];
+			unset($弹幕数组[$i][$键]);
+		}
+		$弹幕数组[$i]['playTime'] = sprintf('%0.3f', $弹幕数组[$i]['playTime'] / 1000.0);
+	}
+			
+
 	$结果数组['comments'] = $弹幕数组;
 	
 	return json_encode($结果数组);
 }
-
-$可扩展标记语言 = sprintf($可扩展标记语言模板, 
-										$动画编号,
-										htmlspecialchars($影片地址),
-										$播放次数,
-										htmlspecialchars($标题),
-										htmlspecialchars($说明),
-										1, // 在线人数（TODO: 尚未实现）
-										$弹幕总数,
-										$可扩展标记语言。评论元素
-									);
 
 //echo htmlspecialchars($可扩展标记语言);
 ob_clean();
