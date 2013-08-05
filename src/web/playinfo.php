@@ -182,6 +182,35 @@ function 爪哇脚本对象表示($弹幕数组) {
 	}
 			
 
+	// 继续处理 JSON 格式的数据
+	for ($i = 0; $i < count($弹幕数组); $i++) {
+		$是否字幕 = false;
+		$模式 = $弹幕数组[$i]['flyType'];
+		
+		switch($模式){
+			case FLY_MODE_FLY:
+				$模式 = 'fly';
+				break;
+			case FLY_MODE_TOP:
+				$模式 = 'top';
+				break;
+			case FLY_MODE_BOTTOM:
+				$模式 = 'bottom';
+				break;
+			case FLY_MODE_SUBTITLE:
+				$是否字幕 = true;
+				$模式 = 'bottom';
+				break;
+			default:
+				$模式 = 'fly';
+				break;
+		}
+		
+		$弹幕数组[$i]['flyType'] = $模式;
+		$弹幕数组[$i]['isSubtitle'] = ($是否字幕) ? '1' : '0';
+	}
+
+
 	$结果数组['comments'] = $弹幕数组;
 	
 	return json_encode($结果数组);
