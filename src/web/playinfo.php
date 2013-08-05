@@ -179,6 +179,7 @@ function 爪哇脚本对象表示($弹幕数组) {
 			unset($弹幕数组[$i][$键]);
 		}
 		$弹幕数组[$i]['playTime'] = sprintf('%0.3f', $弹幕数组[$i]['playTime'] / 1000.0);
+		$弹幕数组[$i]['fontColor'] = sprintf('%06x', $弹幕数组[$i]['fontColor']);
 	}
 			
 
