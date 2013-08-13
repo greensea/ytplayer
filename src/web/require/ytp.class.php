@@ -10,6 +10,8 @@ class 邀踢动画类{
 
 	function 保存弹幕($动画编号, $内容, $用户编号, $片时, $颜色, $模式, $大小){
 		global $数据库;
+		
+		if(!isset($速度)) $速度 = FLY_SPEED_DEFAULT;
 
 		$动画编号 = intval($动画编号);
 		$内容 = $数据库->查询语句转义($内容);
@@ -20,7 +22,6 @@ class 邀踢动画类{
 		$大小 = intval($大小);
 		$速度 = intval($速度);
 		$当前时间 = time();
-		if(!$速度) $速度 = FLY_SPEED_DEFAULT;
 
 		//$语句 = "INSERT INTO 弹幕(动画编号,用户编号,内容,播放时间,字号,颜色,模式,速度)VALUES($动画编号,$用户编号,'$内容',$片时,$大小,$颜色,$模式,$速度)";
 		$语句 = "INSERT INTO popsub(videoid,userid,content,playtime,fontsize,color,flymode,speed,popsubtime)VALUES($动画编号,$用户编号,'$内容',$片时,$大小,$颜色,$模式,$速度,$当前时间)";
